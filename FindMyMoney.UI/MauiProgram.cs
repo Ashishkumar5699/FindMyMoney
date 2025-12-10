@@ -1,4 +1,5 @@
-﻿using FindMyMoney.Helpers;
+﻿using FindMyMoney.Configurations;
+using FindMyMoney.Helpers;
 using FindMyMoney.Views;
 
 namespace FindMyMoney;
@@ -15,17 +16,8 @@ public static class MauiProgram
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
 			});
-
-		builder.Services.AddSingleton<NavigationService>();
-
-        // builder.Services.AddSingleton<ApiService>();
-        // builder.Services.AddSingleton<AuthService>();
-
-        builder.Services.AddSingleton<LoginViewModel>();
-        // builder.Services.AddSingleton<HomeViewModel>();
-
-        builder.Services.AddSingleton<LoginPage>();
-        builder.Services.AddSingleton<HomePage>();
+			
+        builder.Services.RegisterUIs();
 
 #if DEBUG
 		// builder.Logging.AddDebug();

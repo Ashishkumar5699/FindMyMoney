@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "WgPk5hOqsGM=",
+  "dgSpecHash": "BOJRV7lS58Y=",
   "success": true,
   "projectFilePath": "/Users/ashishkumar/Projects/PNJB/FindMyMoney/FindMyMoney.UI/FindMyMoney.UI.csproj",
   "expectedPackageFiles": [
+    "/Users/ashishkumar/.nuget/packages/communitytoolkit.mvvm/8.4.0/communitytoolkit.mvvm.8.4.0.nupkg.sha512",
     "/Users/ashishkumar/.nuget/packages/microsoft.extensions.configuration/10.0.0/microsoft.extensions.configuration.10.0.0.nupkg.sha512",
     "/Users/ashishkumar/.nuget/packages/microsoft.extensions.configuration.abstractions/10.0.0/microsoft.extensions.configuration.abstractions.10.0.0.nupkg.sha512",
     "/Users/ashishkumar/.nuget/packages/microsoft.extensions.dependencyinjection/10.0.0/microsoft.extensions.dependencyinjection.10.0.0.nupkg.sha512",

@@ -1,3 +1,4 @@
+using FindMyMoney.Application.ViewModels;
 
 namespace FindMyMoney.Views;
 
@@ -8,8 +9,4 @@ public partial class LoginPage : ContentPage
 		InitializeComponent();
 		BindingContext = viewModel;
 	}
-}
-
-public class LoginViewModel
-{
 }
