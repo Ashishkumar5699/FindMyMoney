@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <_MainFile Include="/Users/ashishkumar/Projects/PNJB/FindMyMoney/FindMyMoney.UI/obj/Release/net10.0-ios/ios-arm64/linker-cache/main.arm64.mm">
+      <Arch>arm64</Arch>
+    </_MainFile>
+  </ItemGroup>
+</Project>

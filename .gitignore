@@ -1,0 +1,10 @@
+FindMyMoney.Application/bin/*
+FindMyMoney.Application/obj/*
+FindMyMoney.Domain/obj/*
+FindMyMoney.Domain/bin/*
+FindMyMoney.Infrastructure/bin/*
+FindMyMoney.Infrastructure/obj/*
+FindMyMoney.Tests/bin/*
+FindMyMoney.Tests/obj/*
+FindMyMoney.UI/bin/Debug/*
+FindMyMoney.UI/obj/Debug/*

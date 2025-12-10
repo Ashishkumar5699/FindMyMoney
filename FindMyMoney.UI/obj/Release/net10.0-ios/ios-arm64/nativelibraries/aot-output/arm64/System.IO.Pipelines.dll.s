@@ -1,0 +1,156 @@
+.subsections_via_symbols
+.text
+	.align 3
+jit_code_start:
+_mono_aot_System_IO_Pipelinesjit_code_start:
+	.globl _mono_aot_System_IO_Pipelinesjit_code_start
+
+	.byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+.text
+	.align 3
+jit_code_end:
+_mono_aot_System_IO_Pipelinesjit_code_end:
+	.globl _mono_aot_System_IO_Pipelinesjit_code_end
+
+	.byte 0,0,0,0
+.no_dead_strip _System_IO_Pipelines_System_IO_Pipelines_PipeWriter_get_UnflushedBytes
+.no_dead_strip _System_IO_Pipelines_System_IO_Pipelines_PipeWriter__ctor
+.no_dead_strip _System_IO_Pipelines_System_IO_Pipelines_ThrowHelper_CreateNotSupportedException_UnflushedBytes
+.no_dead_strip _mono_aot_System_IO_Pipelines_init_method
+.no_dead_strip _mono_aot_System_IO_Pipelines_init_method_gshared_mrgctx
+.no_dead_strip _mono_aot_System_IO_Pipelines_init_method_gshared_this
+.no_dead_strip _mono_aot_System_IO_Pipelines_init_method_gshared_vtable
+.no_dead_strip _mono_aot_System_IO_Pipelines_icall_cold_wrapper_249
+
+.text
+	.align 3
+method_addresses:
+_mono_aot_System_IO_Pipelinesmethod_addresses:
+	.globl _mono_aot_System_IO_Pipelinesmethod_addresses
+	.no_dead_strip method_addresses
+bl method_addresses
+bl method_addresses
+bl _System_IO_Pipelines_System_IO_Pipelines_PipeWriter_get_UnflushedBytes
+bl _System_IO_Pipelines_System_IO_Pipelines_PipeWriter__ctor
+bl _System_IO_Pipelines_System_IO_Pipelines_ThrowHelper_CreateNotSupportedException_UnflushedBytes
+bl method_addresses
+bl _mono_aot_System_IO_Pipelines_init_method
+bl _mono_aot_System_IO_Pipelines_init_method_gshared_mrgctx
+bl _mono_aot_System_IO_Pipelines_init_method_gshared_this
+bl _mono_aot_System_IO_Pipelines_init_method_gshared_vtable
+bl _mono_aot_System_IO_Pipelines_icall_cold_wrapper_249
+method_addresses_end:
+
+.section __TEXT, __const
+	.align 3
+unbox_trampolines:
+_mono_aot_System_IO_Pipelinesunbox_trampolines:
+	.globl _mono_aot_System_IO_Pipelinesunbox_trampolines
+unbox_trampolines_end:
+_mono_aot_System_IO_Pipelinesunbox_trampolines_end:
+	.globl _mono_aot_System_IO_Pipelinesunbox_trampolines_end
+
+	.long 0
+.text
+	.align 3
+unbox_trampoline_addresses:
+_mono_aot_System_IO_Pipelinesunbox_trampoline_addresses:
+	.globl _mono_aot_System_IO_Pipelinesunbox_trampoline_addresses
+
+	.long 0
+.section __TEXT, __const
+	.align 3
+unwind_info:
+_mono_aot_System_IO_Pipelinesunwind_info:
+	.globl _mono_aot_System_IO_Pipelinesunwind_info
+
+.text
+	.align 4
+plt:
+_mono_aot_System_IO_Pipelinesplt:
+	.globl _mono_aot_System_IO_Pipelinesplt
+mono_aot_System_IO_Pipelines_plt:
+_p_1_plt_System_IO_Pipelines__jit_icall_mono_threads_state_poll_llvm:
+	.globl _p_1_plt_System_IO_Pipelines__jit_icall_mono_threads_state_poll_llvm
+.private_extern _p_1_plt_System_IO_Pipelines__jit_icall_mono_threads_state_poll_llvm
+	.no_dead_strip plt_System_IO_Pipelines__jit_icall_mono_threads_state_poll
+plt_System_IO_Pipelines__jit_icall_mono_threads_state_poll:
+_p_1:
+adrp x16, mono_aot_System_IO_Pipelines_got@PAGE+0
+add x16, x16, mono_aot_System_IO_Pipelines_got@PAGEOFF
+ldr x16, [x16, #208]
+br x16
+.word 88
+_p_2_plt_System_IO_Pipelines_System_IO_Pipelines_ThrowHelper_CreateNotSupportedException_UnflushedBytes_llvm:
+	.globl _p_2_plt_System_IO_Pipelines_System_IO_Pipelines_ThrowHelper_CreateNotSupportedException_UnflushedBytes_llvm
+.private_extern _p_2_plt_System_IO_Pipelines_System_IO_Pipelines_ThrowHelper_CreateNotSupportedException_UnflushedBytes_llvm
+	.no_dead_strip plt_System_IO_Pipelines_System_IO_Pipelines_ThrowHelper_CreateNotSupportedException_UnflushedBytes
+plt_System_IO_Pipelines_System_IO_Pipelines_ThrowHelper_CreateNotSupportedException_UnflushedBytes:
+_p_2:
+adrp x16, mono_aot_System_IO_Pipelines_got@PAGE+0
+add x16, x16, mono_aot_System_IO_Pipelines_got@PAGEOFF
+ldr x16, [x16, #216]
+br x16
+.word 91
+_p_3_plt_System_IO_Pipelines__jit_icall_mono_arch_throw_exception_llvm:
+	.globl _p_3_plt_System_IO_Pipelines__jit_icall_mono_arch_throw_exception_llvm
+.private_extern _p_3_plt_System_IO_Pipelines__jit_icall_mono_arch_throw_exception_llvm
+	.no_dead_strip plt_System_IO_Pipelines__jit_icall_mono_arch_throw_exception
+plt_System_IO_Pipelines__jit_icall_mono_arch_throw_exception:
+_p_3:
+adrp x16, mono_aot_System_IO_Pipelines_got@PAGE+0
+add x16, x16, mono_aot_System_IO_Pipelines_got@PAGEOFF
+ldr x16, [x16, #224]
+br x16
+.word 96
+_p_4_plt_System_IO_Pipelines_wrapper_alloc_object_AllocSmall_intptr_intptr_llvm:
+	.globl _p_4_plt_System_IO_Pipelines_wrapper_alloc_object_AllocSmall_intptr_intptr_llvm
+.private_extern _p_4_plt_System_IO_Pipelines_wrapper_alloc_object_AllocSmall_intptr_intptr_llvm
+	.no_dead_strip plt_System_IO_Pipelines_wrapper_alloc_object_AllocSmall_intptr_intptr
+plt_System_IO_Pipelines_wrapper_alloc_object_AllocSmall_intptr_intptr:
+_p_4:
+adrp x16, mono_aot_System_IO_Pipelines_got@PAGE+0
+add x16, x16, mono_aot_System_IO_Pipelines_got@PAGEOFF
+ldr x16, [x16, #232]
+br x16
+.word 98
+_p_5_plt_System_IO_Pipelines_System_NotSupportedException__ctor_string_llvm:
+	.globl _p_5_plt_System_IO_Pipelines_System_NotSupportedException__ctor_string_llvm
+.private_extern _p_5_plt_System_IO_Pipelines_System_NotSupportedException__ctor_string_llvm
+	.no_dead_strip plt_System_IO_Pipelines_System_NotSupportedException__ctor_string
+plt_System_IO_Pipelines_System_NotSupportedException__ctor_string:
+_p_5:
+adrp x16, mono_aot_System_IO_Pipelines_got@PAGE+0
+add x16, x16, mono_aot_System_IO_Pipelines_got@PAGEOFF
+ldr x16, [x16, #240]
+br x16
+.word 106
+plt_end:
+_mono_aot_System_IO_Pipelinesplt_end:
+	.globl _mono_aot_System_IO_Pipelinesplt_end
+.section __DATA, __bss
+	.align 3
+jit_got:
+_mono_aot_System_IO_Pipelinesjit_got:
+	.globl _mono_aot_System_IO_Pipelinesjit_got
+.lcomm mono_aot_System_IO_Pipelines_got, 248
+got_end:
+.section __TEXT, __const
+	.align 3
+Lglobals_hash:
+
+	.short 11, 0, 0, 0, 0, 0, 0, 0
+	.short 0, 0, 0, 0, 0, 0, 0, 0
+	.short 0, 0, 0, 0, 0, 0, 0
+.data
+	.align 3
+globals:
+_mono_aot_System_IO_Pipelinesglobals:
+	.globl _mono_aot_System_IO_Pipelinesglobals
+	.align 3
+	.quad Lglobals_hash
+
+	.long 0,0
+.text
+	.align 3
+mem_end:

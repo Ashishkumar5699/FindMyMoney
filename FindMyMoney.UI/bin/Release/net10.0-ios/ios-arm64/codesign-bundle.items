@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <_CodesignBundle Include="FindMyMoney.UI.app">
+      <EnableCodeSigning>true</EnableCodeSigning>
+      <CodesignSigningKey>3A39EE96CB2405D0F40E2937B3A657C57F2CB56D</CodesignSigningKey>
+      <CodesignEntitlements>/Users/ashishkumar/Projects/PNJB/FindMyMoney/FindMyMoney.UI/obj/Release/net10.0-ios/ios-arm64/Entitlements.xcent</CodesignEntitlements>
+      <CodesignUseSecureTimestamp></CodesignUseSecureTimestamp>
+      <CodesignAllocate>/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/codesign_allocate</CodesignAllocate>
+      <CodesignExtraArgs></CodesignExtraArgs>
+      <CodesignResourceRules></CodesignResourceRules>
+      <CodesignDisableTimestamp>false</CodesignDisableTimestamp>
+      <CodesignKeychain></CodesignKeychain>
+      <CodesignUseHardenedRuntime></CodesignUseHardenedRuntime>
+      <SourceProjectPath>/Users/ashishkumar/Projects/PNJB/FindMyMoney/FindMyMoney.UI</SourceProjectPath>
+    </_CodesignBundle>
+  </ItemGroup>
+</Project>
