@@ -12,11 +12,12 @@
 
   	<ItemGroup>
 	  	<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
+	  	<PackageReference Include="Refit.HttpClientFactory" Version="8.0.0" />
     </ItemGroup>
 
   	<ItemGroup>
   	  <ProjectReference Include="../FindMyMoney.Domain/FindMyMoney.Domain.csproj" />
+  	  <ProjectReference Include="../FindMyMoney.Infrastructure/FindMyMoney.Infrastructure.csproj" />
   	</ItemGroup>
 
 </Project>

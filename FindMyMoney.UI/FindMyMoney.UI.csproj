@@ -14,7 +14,10 @@
 		The Mac App Store will NOT accept apps with ONLY maccatalyst-arm64 indicated;
 		either BOTH runtimes must be indicated or ONLY macatalyst-x64. -->
 		<!-- For example: <RuntimeIdentifiers>maccatalyst-x64;maccatalyst-arm64</RuntimeIdentifiers> -->
-
+		
+		<RuntimeIdentifiers>ios-arm64;iossimulator-arm64</RuntimeIdentifiers>
+		<!-- Required for IPA -->
+  		<CreatePackage>true</CreatePackage>
 		<OutputType>Exe</OutputType>
 		<RootNamespace>FindMyMoney</RootNamespace>
 		<UseMaui>true</UseMaui>
@@ -24,15 +27,7 @@
 
 		<!-- Display name -->
 		<ApplicationTitle>FindMyMoney</ApplicationTitle>
-        <CodesignKey>iPhone Distribution: City of Las Vegas</CodesignKey>
-        <CodesignProvision>mobile-inspector.dev</CodesignProvision>
-
-        <!-- App Identifier -->
-        <!-- <ApplicationId>gov.lasvegasnevada.mobile-inspector.dev</ApplicationId> -->
-        <!-- <ApplicationId>gov.lasvegasnevada.StormwaterInspector</ApplicationId> -->
-        <ApplicationId>gov.lasvegasnevada.mobile-inspector.dev</ApplicationId>
-		<!-- App Identifier -->
-		<!-- <ApplicationId>com.companyname.findmymoney</ApplicationId> -->
+        <ApplicationId>com.Sonar.FindMyMoney</ApplicationId>
 
 		<!-- Versions -->
 		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
@@ -70,6 +65,11 @@
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.8" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.8" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Include="appsettings.json" />
 	</ItemGroup>
 
 	<ItemGroup>
