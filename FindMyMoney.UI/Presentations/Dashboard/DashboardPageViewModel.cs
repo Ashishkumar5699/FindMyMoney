@@ -38,10 +38,10 @@ public partial class DashboardPageViewModel : BaseViewModel
     decimal balance;
 
     /// <summary>
-    /// Gets or sets the username of the logged-in user
+    /// Gets the username of the logged-in user
     /// </summary>
     [ObservableProperty]
-    string userName = "User";
+    readonly string userName = "User";
 
     /// <summary>
     /// Gets or sets the greeting message based on time of day
