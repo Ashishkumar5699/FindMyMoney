@@ -17,6 +17,7 @@ public partial class DashboardPageViewModel : BaseViewModel
 {
     private readonly IExpenseService _expenseService;
     private readonly IIncomeService _incomeService;
+    private readonly IUserService _userService;
     private readonly ILogger<DashboardPageViewModel> _logger;
 
     /// <summary>
@@ -77,10 +78,12 @@ public partial class DashboardPageViewModel : BaseViewModel
     public DashboardPageViewModel(
         IExpenseService expenseService,
         IIncomeService incomeService,
+        IUserService userService,
         ILogger<DashboardPageViewModel> logger)
     {
         _expenseService = expenseService;
         _incomeService = incomeService;
+        _userService = userService;
         _logger = logger;
 
         Title = "Dashboard";
@@ -115,9 +118,15 @@ public partial class DashboardPageViewModel : BaseViewModel
             IsBusy = true;
             _logger.LogInformation("Loading dashboard data");
 
-            // In a real app, you would get the current user ID from a service
-            // For now, using a placeholder
-            Guid userId = Guid.NewGuid(); // TODO: Get actual user ID from auth service
+            // Get the current authenticated user ID
+            Guid userId = await _userService.GetCurrentUserIdAsync();
+
+            // Update username
+            var username = await _userService.GetCurrentUserNameAsync();
+            if (!string.IsNullOrEmpty(username))
+            {
+                UserName = username;
+            }
 
             // Load financial summary
             await LoadFinancialSummary(userId);
