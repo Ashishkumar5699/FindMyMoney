@@ -1,4 +1,4 @@
-namespace FindMyMoney.Application.DTOs.Auth;
+namespace FindMyMoney.Domain.DTOs.Auth;
 
 public class LoginRequest
 {

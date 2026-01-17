@@ -22,6 +22,11 @@ public class TokenService : ITokenService
         await Task.CompletedTask;
     }
 
+    public Task SaveTokenAsync(object token)
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task<bool> HasTokenAsync()
     {
         var token = await GetTokenAsync();

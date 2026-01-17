@@ -12,7 +12,7 @@ public class CreateExpenseCommand
     /// <summary>
     /// Gets or sets the identifier of the user creating the expense
     /// </summary>
-    public int UserId { get; set; }
+    public Guid UserId { get; set; }
 
     /// <summary>
     /// Gets or sets the amount of money spent

@@ -1,6 +1,8 @@
-namespace FindMyMoney.Application.DTOs.Auth;
+using FindMyMoney.Application.DTOs;
 
-public class RegisterResponse
+namespace FindMyMoney.Domain.DTOs.Auth;
+
+public class LoginResponse
 {
     public string Token { get; set; } = string.Empty;
 

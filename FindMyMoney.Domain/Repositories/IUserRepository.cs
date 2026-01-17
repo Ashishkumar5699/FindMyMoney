@@ -1,4 +1,5 @@
 using FindMyMoney.Domain.Common;
+using FindMyMoney.Domain.DTOs.Auth;
 using FindMyMoney.Domain.Models;
 
 namespace FindMyMoney.Domain.Repositories;
@@ -21,7 +22,7 @@ public interface IUserRepository
     /// </summary>
     /// <param name="userId">The unique identifier of the user</param>
     /// <returns>A Result containing the user if found, or an error message</returns>
-    Task<Result<User>> GetByIdAsync(int userId);
+    Task<Result<User>> GetByIdAsync(Guid userId);
 
     /// <summary>
     /// Retrieves a user by their username
@@ -49,5 +50,7 @@ public interface IUserRepository
     /// </summary>
     /// <param name="userId">The unique identifier of the user to delete</param>
     /// <returns>A Result indicating success or failure with error message</returns>
-    Task<Result> DeleteAsync(int userId);
+    Task<Result> DeleteAsync(Guid userId);
+    Task<Result<User>> RegisterAsync(RegisterRequest request);
+    Task<Result<User>> ValidateTokenAsync(ValidateTokenRequest request);
 }

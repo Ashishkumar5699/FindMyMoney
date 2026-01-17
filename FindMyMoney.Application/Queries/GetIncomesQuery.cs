@@ -6,7 +6,7 @@ namespace FindMyMoney.Application.Queries;
 // Query - Represents the request to get incomes
 public class GetIncomesQuery
 {
-    public int UserId { get; set; }
+    public Guid UserId { get; set; }
     
     public DateTime? StartDate { get; set; }
     

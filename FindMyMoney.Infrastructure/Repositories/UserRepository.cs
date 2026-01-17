@@ -1,4 +1,5 @@
 using FindMyMoney.Domain.Common;
+using FindMyMoney.Domain.DTOs.Auth;
 using FindMyMoney.Domain.Models;
 using FindMyMoney.Domain.Repositories;
 using Microsoft.Extensions.Logging;
@@ -37,7 +38,7 @@ public class UserRepository : IUserRepository
         }
     }
 
-    public async Task<Result<User>> GetByIdAsync(int userId)
+    public async Task<Result<User>> GetByIdAsync(Guid userId)
     {
         _logger.LogInformation("Getting user by ID: {UserId}", userId);
 
@@ -105,7 +106,7 @@ public class UserRepository : IUserRepository
         }
     }
 
-    public async Task<Result> DeleteAsync(int userId)
+    public async Task<Result> DeleteAsync(Guid userId)
     {
         _logger.LogInformation("Deleting user: {UserId}", userId);
 
@@ -120,5 +121,15 @@ public class UserRepository : IUserRepository
             _logger.LogError(ex, "Error deleting user: {UserId}", userId);
             return Result.Failure("An error occurred while deleting user");
         }
+    }
+
+    public Task<Result<User>> RegisterAsync(RegisterRequest request)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<Result<User>> ValidateTokenAsync(ValidateTokenRequest request)
+    {
+        throw new NotImplementedException();
     }
 }

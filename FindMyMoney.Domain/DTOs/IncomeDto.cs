@@ -1,14 +1,14 @@
 namespace FindMyMoney.Application.DTOs;
 
-public class ExpenseDto
+public class IncomeDto
 {
-    public int Id { get; set; }
-   
-    public int UserId { get; set; }
-
+    public Guid Id { get; set; }
+    
+    public Guid UserId { get; set; }
+    
     public decimal Amount { get; set; }
     
-    public string Category { get; set; } = string.Empty;
+    public string Source { get; set; } = string.Empty;
     
     public string Description { get; set; } = string.Empty;
     
