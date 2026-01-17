@@ -1,6 +1,7 @@
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Core;
 using FindMyMoney.Domain.IService;
+using Microsoft.Maui.Controls;
 
 namespace FindMyMoney.UI.Services;
 
@@ -11,18 +12,18 @@ public class DialogService : IDialogService
 {
     public async Task ShowAlertAsync(string title, string message, string buttonText = "OK")
     {
-        // if (Application.Current?.MainPage != null)
-        // {
-        //     await Application.Current.MainPage.DisplayAlert(title, message, buttonText);
-        // }
+        if (Application.Current?.MainPage != null)
+        {
+            await Application.Current.MainPage.DisplayAlert(title, message, buttonText);
+        }
     }
 
     public async Task<bool> ShowConfirmAsync(string title, string message, string acceptText = "Yes", string cancelText = "No")
     {
-        // if (Application.Current?.MainPage != null)
-        // {
-        //     return await Application.Current.MainPage.DisplayAlert(title, message, acceptText, cancelText);
-        // }
+        if (Application.Current?.MainPage != null)
+        {
+            return await Application.Current.MainPage.DisplayAlert(title, message, acceptText, cancelText);
+        }
         return false;
     }
 
