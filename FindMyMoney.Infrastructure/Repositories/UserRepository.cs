@@ -123,13 +123,47 @@ public class UserRepository : IUserRepository
         }
     }
 
-    public Task<Result<User>> RegisterAsync(RegisterRequest request)
+    public async Task<Result<User>> RegisterAsync(RegisterRequest request)
     {
-        throw new NotImplementedException();
+        _logger.LogInformation("Registering new user: {Username}", request.Username);
+
+        try
+        {
+            // TODO: Implement actual registration logic with database
+            // For now, this is a placeholder
+            await Task.CompletedTask;
+
+            // Mock implementation - replace with real database logic
+            _logger.LogWarning("Using mock registration - implement real database logic");
+
+            return Result<User>.Failure("Registration not yet implemented");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during registration for user: {Username}", request.Username);
+            return Result<User>.Failure("An error occurred during registration");
+        }
     }
 
-    public Task<Result<User>> ValidateTokenAsync(ValidateTokenRequest request)
+    public async Task<Result<User>> ValidateTokenAsync(ValidateTokenRequest request)
     {
-        throw new NotImplementedException();
+        _logger.LogInformation("Validating token");
+
+        try
+        {
+            // TODO: Implement actual token validation logic
+            // For now, this is a placeholder
+            await Task.CompletedTask;
+
+            // Mock implementation - replace with real token validation logic
+            _logger.LogWarning("Using mock token validation - implement real validation logic");
+
+            return Result<User>.Failure("Token validation not yet implemented");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during token validation");
+            return Result<User>.Failure("An error occurred during token validation");
+        }
     }
 }
