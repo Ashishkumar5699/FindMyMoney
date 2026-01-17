@@ -121,6 +121,13 @@ public partial class DashboardPageViewModel : BaseViewModel
             // Get the current authenticated user ID
             Guid userId = await _userService.GetCurrentUserIdAsync();
 
+            // Check if user is authenticated
+            if (userId == Guid.Empty)
+            {
+                _logger.LogWarning("User is not authenticated. Cannot load dashboard data.");
+                return;
+            }
+
             // Update username
             var username = await _userService.GetCurrentUserNameAsync();
             if (!string.IsNullOrEmpty(username))
