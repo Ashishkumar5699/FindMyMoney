@@ -131,7 +131,7 @@ public class UserRepository : IUserRepository
         {
             // TODO: Implement actual registration logic with database
             // For now, this is a placeholder
-            await Task.Delay(100); // Simulate async operation
+            await Task.CompletedTask;
 
             // Mock implementation - replace with real database logic
             _logger.LogWarning("Using mock registration - implement real database logic");
@@ -153,7 +153,7 @@ public class UserRepository : IUserRepository
         {
             // TODO: Implement actual token validation logic
             // For now, this is a placeholder
-            await Task.Delay(100); // Simulate async operation
+            await Task.CompletedTask;
 
             // Mock implementation - replace with real token validation logic
             _logger.LogWarning("Using mock token validation - implement real validation logic");
