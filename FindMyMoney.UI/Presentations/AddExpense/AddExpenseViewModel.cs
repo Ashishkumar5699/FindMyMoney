@@ -39,7 +39,7 @@ public partial class AddExpenseViewModel : BaseViewModel
     /// Gets or sets the expense date
     /// </summary>
     [ObservableProperty]
-    DateTime expenseDate = DateTime.Now;
+    DateTime expenseDate;
 
     /// <summary>
     /// Gets or sets the error message to display
@@ -88,6 +88,9 @@ public partial class AddExpenseViewModel : BaseViewModel
 
         // Set default category
         SelectedCategory = Categories.First();
+        
+        // Initialize expense date to current date
+        ExpenseDate = DateTime.Now;
     }
 
     /// <summary>
