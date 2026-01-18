@@ -1,4 +1,6 @@
-namespace FindMyMoney.Application.DTOs.Auth;
+using FindMyMoney.Application.DTOs;
+
+namespace FindMyMoney.Domain.DTOs.Auth;
 
 public class ValidateTokenResponse
 {

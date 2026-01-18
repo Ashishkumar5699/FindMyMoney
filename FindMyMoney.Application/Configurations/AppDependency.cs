@@ -16,12 +16,15 @@ public static class ApplicationRegistration
         // Register Auth Service
         services.AddScoped<IAuthService, AuthService>();
 
-        // Register Refit API Client
-        services.AddRefitClient<IAuthApiService>()
-            .ConfigureHttpClient(c => c.BaseAddress = new Uri(apiBaseUrl));
+        // Register User Service
+        services.AddScoped<IUserService, UserService>();
+
+        // Register Business Services
+        services.AddScoped<IExpenseService, ExpenseService>();
+        services.AddScoped<IIncomeService, IncomeService>();
 
         // Register Infrastructure layer
-        services.AddInfrastructure();
+        services.AddInfrastructure(apiBaseUrl);
 
         return services;
     }

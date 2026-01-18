@@ -1,4 +1,5 @@
 using FindMyMoney.Domain.Common;
+using FindMyMoney.Domain.DTOs.Auth;
 using FindMyMoney.Domain.Models;
 using FindMyMoney.Domain.Repositories;
 using Microsoft.Extensions.Logging;
@@ -37,7 +38,7 @@ public class UserRepository : IUserRepository
         }
     }
 
-    public async Task<Result<User>> GetByIdAsync(int userId)
+    public async Task<Result<User>> GetByIdAsync(Guid userId)
     {
         _logger.LogInformation("Getting user by ID: {UserId}", userId);
 
@@ -105,7 +106,7 @@ public class UserRepository : IUserRepository
         }
     }
 
-    public async Task<Result> DeleteAsync(int userId)
+    public async Task<Result> DeleteAsync(Guid userId)
     {
         _logger.LogInformation("Deleting user: {UserId}", userId);
 
@@ -119,6 +120,50 @@ public class UserRepository : IUserRepository
         {
             _logger.LogError(ex, "Error deleting user: {UserId}", userId);
             return Result.Failure("An error occurred while deleting user");
+        }
+    }
+
+    public async Task<Result<User>> RegisterAsync(RegisterRequest request)
+    {
+        _logger.LogInformation("Registering new user: {Username}", request.Username);
+
+        try
+        {
+            // TODO: Implement actual registration logic with database
+            // For now, this is a placeholder
+            await Task.CompletedTask;
+
+            // Mock implementation - replace with real database logic
+            _logger.LogWarning("Using mock registration - implement real database logic");
+
+            return Result<User>.Failure("Registration not yet implemented");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during registration for user: {Username}", request.Username);
+            return Result<User>.Failure("An error occurred during registration");
+        }
+    }
+
+    public async Task<Result<User>> ValidateTokenAsync(ValidateTokenRequest request)
+    {
+        _logger.LogInformation("Validating token");
+
+        try
+        {
+            // TODO: Implement actual token validation logic
+            // For now, this is a placeholder
+            await Task.CompletedTask;
+
+            // Mock implementation - replace with real token validation logic
+            _logger.LogWarning("Using mock token validation - implement real validation logic");
+
+            return Result<User>.Failure("Token validation not yet implemented");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during token validation");
+            return Result<User>.Failure("An error occurred during token validation");
         }
     }
 }

@@ -42,13 +42,7 @@ public class AuthHelper
         {
             var result = await _authService.GetCurrentUserAsync();
 
-            if (result.IsSuccess)
-            {
-                return result.Data.Username;
-            }
-
-            _logger.LogWarning("Failed to get current user: {Error}", result.Error);
-            return null;
+            return result.IsSuccess ? result.Data?.Username : null;
         }
         catch (Exception ex)
         {

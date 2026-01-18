@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="FindMyMoney.Presentations.AddExpense.AddExpensePage"
+             xmlns:viewmodel="clr-namespace:FindMyMoney.Presentations.AddExpense"
+             x:DataType="viewmodel:AddExpenseViewModel"
+             Title="Add Expense"
+             BackgroundColor="{StaticResource Gray100}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="20">
+
+            <!-- Header -->
+            <Frame BackgroundColor="White"
+                   CornerRadius="15"
+                   HasShadow="True"
+                   Padding="20">
+                <VerticalStackLayout Spacing="5">
+                    <Label Text="Add New Expense"
+                           FontSize="24"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource Primary}" />
+                    <Label Text="Track your spending"
+                           FontSize="14"
+                           TextColor="{StaticResource Gray600}" />
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Form -->
+            <Frame BackgroundColor="White"
+                   CornerRadius="15"
+                   HasShadow="True"
+                   Padding="20">
+                <VerticalStackLayout Spacing="20">
+
+                    <!-- Amount Input -->
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Amount *"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource Gray900}" />
+                        <Border Stroke="{StaticResource Primary}"
+                                StrokeThickness="1"
+                                BackgroundColor="White"
+                                Padding="12,8"
+                                StrokeShape="RoundRectangle 8">
+                            <Grid ColumnDefinitions="Auto,*">
+                                <Label Grid.Column="0"
+                                       Text="₹"
+                                       FontSize="18"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource Primary}"
+                                       VerticalOptions="Center"
+                                       Margin="0,0,8,0" />
+                                <Entry Grid.Column="1"
+                                       Text="{Binding Amount}"
+                                       Placeholder="0.00"
+                                       Keyboard="Numeric"
+                                       FontSize="18"
+                                       BackgroundColor="Transparent"
+                                       TextColor="{StaticResource Gray900}" />
+                            </Grid>
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <!-- Category Picker -->
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Category *"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource Gray900}" />
+                        <Border Stroke="{StaticResource Gray300}"
+                                StrokeThickness="1"
+                                BackgroundColor="White"
+                                Padding="12,0"
+                                StrokeShape="RoundRectangle 8">
+                            <Picker ItemsSource="{Binding Categories}"
+                                    SelectedItem="{Binding SelectedCategory}"
+                                    FontSize="16"
+                                    TextColor="{StaticResource Gray900}" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <!-- Date Picker -->
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Date *"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource Gray900}" />
+                        <Border Stroke="{StaticResource Gray300}"
+                                StrokeThickness="1"
+                                BackgroundColor="White"
+                                Padding="12,8"
+                                StrokeShape="RoundRectangle 8">
+                            <DatePicker Date="{Binding ExpenseDate}"
+                                        Format="MMMM dd, yyyy"
+                                        FontSize="16"
+                                        TextColor="{StaticResource Gray900}" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <!-- Description Input -->
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Description"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource Gray900}" />
+                        <Border Stroke="{StaticResource Gray300}"
+                                StrokeThickness="1"
+                                BackgroundColor="White"
+                                Padding="12,8"
+                                StrokeShape="RoundRectangle 8">
+                            <Editor Text="{Binding Description}"
+                                    Placeholder="Add notes about this expense..."
+                                    FontSize="16"
+                                    HeightRequest="100"
+                                    AutoSize="TextChanges"
+                                    BackgroundColor="Transparent"
+                                    TextColor="{StaticResource Gray900}" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <!-- Error Message -->
+                    <Label Text="{Binding ErrorMessage}"
+                           IsVisible="{Binding ErrorMessage, Converter={StaticResource StringIsNotNullOrEmptyConverter}}"
+                           TextColor="Red"
+                           FontSize="14"
+                           HorizontalOptions="Center" />
+
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Action Buttons -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                <Button Grid.Column="0"
+                        Text="Cancel"
+                        BackgroundColor="{StaticResource Gray300}"
+                        TextColor="{StaticResource Gray900}"
+                        Command="{Binding CancelCommand}"
+                        CornerRadius="10"
+                        HeightRequest="50" />
+
+                <Button Grid.Column="1"
+                        Text="Save Expense"
+                        BackgroundColor="{StaticResource Primary}"
+                        TextColor="White"
+                        Command="{Binding SaveExpenseCommand}"
+                        IsEnabled="{Binding IsFormValid}"
+                        CornerRadius="10"
+                        HeightRequest="50" />
+            </Grid>
+
+            <!-- Quick Clear Button -->
+            <Button Text="Clear Form"
+                    BackgroundColor="Transparent"
+                    TextColor="{StaticResource Gray600}"
+                    Command="{Binding ClearFormCommand}"
+                    FontSize="14"
+                    HorizontalOptions="Center" />
+
+            <!-- Loading Indicator -->
+            <ActivityIndicator IsRunning="{Binding IsBusy}"
+                              IsVisible="{Binding IsBusy}"
+                              Color="{StaticResource Primary}"
+                              HeightRequest="50" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

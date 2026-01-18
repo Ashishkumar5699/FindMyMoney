@@ -12,7 +12,7 @@ public class GetExpensesQuery
     /// <summary>
     /// Gets or sets the identifier of the user whose expenses to retrieve
     /// </summary>
-    public int UserId { get; set; }
+    public Guid UserId { get; set; }
 
     /// <summary>
     /// Gets or sets the optional start date to filter expenses.
