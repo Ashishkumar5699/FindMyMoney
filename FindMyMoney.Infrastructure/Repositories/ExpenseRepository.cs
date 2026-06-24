@@ -5,15 +5,22 @@ using FindMyMoney.Domain.Models;
 using FindMyMoney.Domain.Repositories;
 using FindMyMoney.Infrastructure.ApiClients;
 using FindMyMoney.Infrastructure.Common;
-using FindMyMoney.Infrastructure.Mappers;
+using FindMyMoney.Infrastructure.Local;
+using FindMyMoney.Infrastructure.Local.Entities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace FindMyMoney.Infrastructure.Repositories;
 
-public class ExpenseRepository(IExpenseRESTRepository restService, IMapper mapper, ILogger<ExpenseRepository> logger)
+public class ExpenseRepository(
+    IExpenseRESTRepository restService,
+    IMapper mapper,
+    LocalDbContext localDb,
+    ILogger<ExpenseRepository> logger)
     : BaseRepoProvider<IExpenseRESTRepository>(restService), IExpenseRepository
 {
     private readonly IMapper _mapper = mapper;
+    private readonly LocalDbContext _localDb = localDb;
     private readonly ILogger<ExpenseRepository> _logger = logger;
 
     public async Task<Result<Expense>> GetByIdAsync(Guid userId, Guid expenseId)
@@ -21,16 +28,16 @@ public class ExpenseRepository(IExpenseRESTRepository restService, IMapper mappe
         try
         {
             _logger.LogInformation("Getting expense by ID: {ExpenseId} for user: {UserId}", expenseId, userId);
-            
             var response = await RestService.GetExpenseByIdAsync(userId, expenseId);
-            var expense = _mapper.Map<Expense>(response);
-            
-            return Result<Expense>.Success(expense);
+            return Result<Expense>.Success(_mapper.Map<Expense>(response));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting expense by ID: {ExpenseId}", expenseId);
-            return Result<Expense>.Failure($"Failed to get expense: {ex.Message}");
+            _logger.LogWarning(ex, "API unavailable, falling back to local DB for expense {ExpenseId}", expenseId);
+            var local = await _localDb.Expenses.FirstOrDefaultAsync(e => e.Id == expenseId);
+            if (local == null)
+                return Result<Expense>.Failure("Expense not found locally");
+            return Result<Expense>.Success(_mapper.Map<Expense>(local));
         }
     }
 
@@ -39,16 +46,16 @@ public class ExpenseRepository(IExpenseRESTRepository restService, IMapper mappe
         try
         {
             _logger.LogInformation("Getting expenses for user: {UserId}", userId);
-            
             var responses = await RestService.GetExpensesAsync(userId);
             var expenses = _mapper.Map<List<Expense>>(responses);
-            
+            await CacheExpensesLocallyAsync(userId, expenses);
             return Result<List<Expense>>.Success(expenses);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting expenses for user: {UserId}", userId);
-            return Result<List<Expense>>.Failure($"Failed to get expenses: {ex.Message}");
+            _logger.LogWarning(ex, "API unavailable, falling back to local DB for user {UserId}", userId);
+            var local = await _localDb.Expenses.Where(e => e.UserId == userId).ToListAsync();
+            return Result<List<Expense>>.Success(_mapper.Map<List<Expense>>(local));
         }
     }
 
@@ -57,21 +64,17 @@ public class ExpenseRepository(IExpenseRESTRepository restService, IMapper mappe
         try
         {
             _logger.LogInformation("Getting expenses for user {UserId} from {StartDate} to {EndDate}", userId, startDate, endDate);
-            
             var responses = await RestService.GetExpensesAsync(userId, startDate.Year, startDate.Month);
-            
-            // Filter by date range
-            var filteredResponses = responses
-                .Where(r => r.Date >= startDate && r.Date <= endDate)
-                .ToList();
-            var expenses = _mapper.Map<List<Expense>>(filteredResponses);
-            
-            return Result<List<Expense>>.Success(expenses);
+            var filtered = responses.Where(r => r.Date >= startDate && r.Date <= endDate).ToList();
+            return Result<List<Expense>>.Success(_mapper.Map<List<Expense>>(filtered));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting expenses by date range for user: {UserId}", userId);
-            return Result<List<Expense>>.Failure($"Failed to get expenses: {ex.Message}");
+            _logger.LogWarning(ex, "API unavailable, falling back to local DB for date range");
+            var local = await _localDb.Expenses
+                .Where(e => e.UserId == userId && e.Date >= startDate && e.Date <= endDate)
+                .ToListAsync();
+            return Result<List<Expense>>.Success(_mapper.Map<List<Expense>>(local));
         }
     }
 
@@ -80,17 +83,19 @@ public class ExpenseRepository(IExpenseRESTRepository restService, IMapper mappe
         try
         {
             _logger.LogInformation("Creating expense for user: {UserId}", expense.UserId);
-            
             var request = _mapper.Map<CreateExpenseRequest>(expense);
             var response = await RestService.CreateExpenseAsync(expense.UserId, request);
-            var createdExpense = _mapper.Map<Expense>(response);
-            
-            return Result<Expense>.Success(createdExpense);
+            var created = _mapper.Map<Expense>(response);
+            await UpsertLocalExpenseAsync(created, SyncStatus.Synced);
+            return Result<Expense>.Success(created);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating expense for user: {UserId}", expense.UserId);
-            return Result<Expense>.Failure($"Failed to create expense: {ex.Message}");
+            _logger.LogWarning(ex, "API unavailable, saving expense locally with PendingCreate");
+            expense.Id = expense.Id == Guid.Empty ? Guid.NewGuid() : expense.Id;
+            expense.CreatedAt = DateTime.UtcNow;
+            await UpsertLocalExpenseAsync(expense, SyncStatus.PendingCreate);
+            return Result<Expense>.Success(expense);
         }
     }
 
@@ -99,16 +104,16 @@ public class ExpenseRepository(IExpenseRESTRepository restService, IMapper mappe
         try
         {
             _logger.LogInformation("Updating expense: {ExpenseId}", expense.Id);
-            
             var request = _mapper.Map<UpdateExpenseRequest>(expense);
             await RestService.UpdateExpenseAsync(expense.UserId, expense.Id, request);
-            
+            await UpsertLocalExpenseAsync(expense, SyncStatus.Synced);
             return Result.Success();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating expense: {ExpenseId}", expense.Id);
-            return Result.Failure($"Failed to update expense: {ex.Message}");
+            _logger.LogWarning(ex, "API unavailable, saving expense update locally with PendingUpdate");
+            await UpsertLocalExpenseAsync(expense, SyncStatus.PendingUpdate);
+            return Result.Success();
         }
     }
 
@@ -117,15 +122,17 @@ public class ExpenseRepository(IExpenseRESTRepository restService, IMapper mappe
         try
         {
             _logger.LogInformation("Deleting expense: {ExpenseId} for user: {UserId}", expenseId, userId);
-            
             await RestService.DeleteExpenseAsync(userId, expenseId);
-            
+            var local = await _localDb.Expenses.FirstOrDefaultAsync(e => e.Id == expenseId);
+            if (local != null) { _localDb.Expenses.Remove(local); await _localDb.SaveChangesAsync(); }
             return Result.Success();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error deleting expense: {ExpenseId}", expenseId);
-            return Result.Failure($"Failed to delete expense: {ex.Message}");
+            _logger.LogWarning(ex, "API unavailable, marking expense {ExpenseId} as PendingDelete", expenseId);
+            var local = await _localDb.Expenses.FirstOrDefaultAsync(e => e.Id == expenseId);
+            if (local != null) { local.SyncStatus = SyncStatus.PendingDelete; await _localDb.SaveChangesAsync(); }
+            return Result.Success();
         }
     }
 
@@ -134,27 +141,63 @@ public class ExpenseRepository(IExpenseRESTRepository restService, IMapper mappe
         try
         {
             _logger.LogInformation("Getting total expenses for user: {UserId}", userId);
-            
             int? year = startDate?.Year;
             int? month = startDate?.Month;
-            
             var responses = await RestService.GetExpensesAsync(userId, year, month);
-            
-            var filteredExpenses = responses.AsEnumerable();
-            
+            var filtered = responses.AsEnumerable();
             if (startDate.HasValue && endDate.HasValue)
-            {
-                filteredExpenses = filteredExpenses.Where(r => r.Date >= startDate.Value && r.Date <= endDate.Value);
-            }
-            
-            var total = filteredExpenses.Sum(r => (decimal)r.Amount);
-            
-            return Result<decimal>.Success(total);
+                filtered = filtered.Where(r => r.Date >= startDate.Value && r.Date <= endDate.Value);
+            return Result<decimal>.Success(filtered.Sum(r => (decimal)r.Amount));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting total expenses for user: {UserId}", userId);
-            return Result<decimal>.Failure($"Failed to get total expenses: {ex.Message}");
+            _logger.LogWarning(ex, "API unavailable, calculating total from local DB");
+            var query = _localDb.Expenses.Where(e => e.UserId == userId);
+            if (startDate.HasValue && endDate.HasValue)
+                query = query.Where(e => e.Date >= startDate.Value && e.Date <= endDate.Value);
+            var total = await query.SumAsync(e => e.Amount);
+            return Result<decimal>.Success(total);
+        }
+    }
+
+    private async Task CacheExpensesLocallyAsync(Guid userId, List<Expense> expenses)
+    {
+        try
+        {
+            var existing = await _localDb.Expenses
+                .Where(e => e.UserId == userId && e.SyncStatus == SyncStatus.Synced)
+                .ToListAsync();
+            _localDb.Expenses.RemoveRange(existing);
+            _localDb.Expenses.AddRange(expenses.Select(e => _mapper.Map<LocalExpense>(e)));
+            await _localDb.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to cache expenses locally");
+        }
+    }
+
+    private async Task UpsertLocalExpenseAsync(Expense expense, SyncStatus status)
+    {
+        try
+        {
+            var local = await _localDb.Expenses.FirstOrDefaultAsync(e => e.Id == expense.Id);
+            if (local == null)
+            {
+                local = _mapper.Map<LocalExpense>(expense);
+                local.SyncStatus = status;
+                _localDb.Expenses.Add(local);
+            }
+            else
+            {
+                _mapper.Map(expense, local);
+                local.SyncStatus = status;
+            }
+            await _localDb.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to upsert expense locally");
         }
     }
 }

@@ -6,5 +6,6 @@ public interface ITokenService
     Task<string?> GetTokenAsync();
     Task ClearTokenAsync();
     Task<bool> HasTokenAsync();
-    Task SaveTokenAsync(object token);
+    Task<string?> GetCurrentUsernameAsync();
+    Task<Guid> GetCurrentUserIdAsync();
 }

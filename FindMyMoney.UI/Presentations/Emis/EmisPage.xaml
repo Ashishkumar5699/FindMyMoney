@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="FindMyMoney.Presentations.Emis.EmisPage"
+             xmlns:viewmodel="clr-namespace:FindMyMoney.Presentations.Emis"
+             x:DataType="viewmodel:EmisViewModel"
+             Title="EMI Tracker"
+             BackgroundColor="{StaticResource Gray100}">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="+ Add" Command="{Binding AddEmiCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <RefreshView IsRefreshing="{Binding IsBusy}" Command="{Binding RefreshCommand}">
+        <ScrollView>
+            <VerticalStackLayout Padding="20" Spacing="15">
+
+                <!-- Summary Cards -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                    <Frame Grid.Column="0" BackgroundColor="#9C27B0" CornerRadius="15" HasShadow="True" Padding="15">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="Active EMIs" FontSize="12" TextColor="White" HorizontalOptions="Center" />
+                            <Label Text="{Binding ActiveEmiCount}" FontSize="26" FontAttributes="Bold"
+                                   TextColor="White" HorizontalOptions="Center" />
+                        </VerticalStackLayout>
+                    </Frame>
+
+                    <Frame Grid.Column="1" BackgroundColor="#FF5722" CornerRadius="15" HasShadow="True" Padding="15">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="Remaining" FontSize="12" TextColor="White" HorizontalOptions="Center" />
+                            <Label Text="{Binding TotalRemainingAmount, StringFormat='₹{0:N0}'}"
+                                   FontSize="18" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" />
+                        </VerticalStackLayout>
+                    </Frame>
+                </Grid>
+
+                <!-- Empty State -->
+                <VerticalStackLayout IsVisible="{Binding HasNoEmis}" Spacing="12" Margin="0,40">
+                    <Label Text="No EMIs tracked yet"
+                           TextColor="{StaticResource Gray600}"
+                           FontSize="18" FontAttributes="Bold"
+                           HorizontalOptions="Center" />
+                    <Label Text="Add your first loan or EMI to track repayments"
+                           TextColor="{StaticResource Gray500}"
+                           FontSize="14"
+                           HorizontalOptions="Center" />
+                    <Button Text="Add EMI"
+                            BackgroundColor="#9C27B0"
+                            TextColor="White"
+                            Command="{Binding AddEmiCommand}"
+                            CornerRadius="10"
+                            HeightRequest="48"
+                            HorizontalOptions="Center"
+                            WidthRequest="160" />
+                </VerticalStackLayout>
+
+                <!-- EMI List -->
+                <CollectionView ItemsSource="{Binding Emis}"
+                                IsVisible="{Binding HasNoEmis, Converter={StaticResource InvertedBoolConverter}}"
+                                SelectionMode="None">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="x:Object">
+                            <Frame BackgroundColor="White" CornerRadius="15" Padding="16" Margin="0,6" HasShadow="True">
+                                <VerticalStackLayout Spacing="10">
+
+                                    <!-- Loan Name & Bank -->
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                            <Label Text="{Binding LoanName}"
+                                                   FontSize="17" FontAttributes="Bold"
+                                                   TextColor="{StaticResource Gray900}" />
+                                            <Label Text="{Binding BankName}"
+                                                   FontSize="13"
+                                                   TextColor="{StaticResource Gray600}" />
+                                        </VerticalStackLayout>
+
+                                        <Frame Grid.Column="1"
+                                               BackgroundColor="#9C27B0"
+                                               CornerRadius="10"
+                                               Padding="8,4"
+                                               HasShadow="False">
+                                            <Label Text="{Binding Status}"
+                                                   TextColor="White"
+                                                   FontSize="11"
+                                                   FontAttributes="Bold" />
+                                        </Frame>
+                                    </Grid>
+
+                                    <!-- EMI Amount & Progress -->
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                            <Label Text="{Binding EmiAmount, StringFormat='EMI: ₹{0:N2}/month'}"
+                                                   FontSize="15" FontAttributes="Bold"
+                                                   TextColor="#9C27B0" />
+                                            <Label Text="{Binding NextDueDate, StringFormat='Next Due: {0:MMM dd, yyyy}'}"
+                                                   FontSize="12"
+                                                   TextColor="#FF5722" />
+                                        </VerticalStackLayout>
+
+                                        <VerticalStackLayout Grid.Column="1" Spacing="2" HorizontalOptions="End">
+                                            <Label Text="{Binding PaidEmis, StringFormat='{0}'}"
+                                                   FontSize="20" FontAttributes="Bold"
+                                                   TextColor="#4CAF50"
+                                                   HorizontalOptions="Center" />
+                                            <Label Text="{Binding TotalEmis, StringFormat='of {0} paid'}"
+                                                   FontSize="11"
+                                                   TextColor="{StaticResource Gray500}"
+                                                   HorizontalOptions="Center" />
+                                        </VerticalStackLayout>
+                                    </Grid>
+
+                                    <!-- Progress Bar -->
+                                    <ProgressBar Progress="{Binding ProgressRatio}"
+                                                 ProgressColor="#4CAF50"
+                                                 BackgroundColor="{StaticResource Gray200}" />
+
+                                    <!-- Remaining Amount -->
+                                    <Label Text="{Binding RemainingAmount, StringFormat='Remaining: ₹{0:N2}'}"
+                                           FontSize="13"
+                                           TextColor="{StaticResource Gray600}" />
+
+                                </VerticalStackLayout>
+                            </Frame>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </RefreshView>
+</ContentPage>

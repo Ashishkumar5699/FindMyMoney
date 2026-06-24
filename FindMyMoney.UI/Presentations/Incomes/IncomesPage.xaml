@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="FindMyMoney.Presentations.Incomes.IncomesPage"
+             xmlns:viewmodel="clr-namespace:FindMyMoney.Presentations.Incomes"
+             x:DataType="viewmodel:IncomesViewModel"
+             Title="All Incomes"
+             BackgroundColor="{StaticResource Gray100}">
+
+    <RefreshView IsRefreshing="{Binding IsBusy}" Command="{Binding RefreshCommand}">
+        <ScrollView>
+            <VerticalStackLayout Padding="20" Spacing="15">
+
+                <!-- Summary Card -->
+                <Frame BackgroundColor="#4CAF50" CornerRadius="15" HasShadow="True" Padding="20">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Total Income" FontSize="14" TextColor="White" HorizontalOptions="Center" />
+                        <Label Text="{Binding TotalAmount, StringFormat='₹{0:N2}'}"
+                               FontSize="28" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Search Bar -->
+                <Border Stroke="{StaticResource Gray300}" StrokeThickness="1" BackgroundColor="White"
+                        Padding="12,8" StrokeShape="RoundRectangle 10">
+                    <SearchBar Text="{Binding SearchText}"
+                               Placeholder="Search by source or description..."
+                               BackgroundColor="Transparent"
+                               TextColor="{StaticResource Gray900}" />
+                </Border>
+
+                <!-- Empty State -->
+                <Label Text="No income recorded yet."
+                       IsVisible="{Binding HasNoIncomes}"
+                       TextColor="{StaticResource Gray600}"
+                       FontSize="16"
+                       HorizontalOptions="Center"
+                       Margin="0,40" />
+
+                <!-- Incomes List -->
+                <CollectionView ItemsSource="{Binding Incomes}"
+                                IsVisible="{Binding HasNoIncomes, Converter={StaticResource InvertedBoolConverter}}"
+                                SelectionMode="None">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="x:Object">
+                            <Frame BackgroundColor="White" CornerRadius="12" Padding="15" Margin="0,5" HasShadow="True">
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                    <Frame Grid.Column="0"
+                                           BackgroundColor="#4CAF50"
+                                           CornerRadius="22"
+                                           Padding="8"
+                                           WidthRequest="44"
+                                           HeightRequest="44"
+                                           HasShadow="False">
+                                        <Label Text="💵" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center" />
+                                    </Frame>
+
+                                    <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                        <Label Text="{Binding Source}"
+                                               FontAttributes="Bold"
+                                               FontSize="15"
+                                               TextColor="{StaticResource Gray900}" />
+                                        <Label Text="{Binding Description}"
+                                               FontSize="12"
+                                               TextColor="{StaticResource Gray600}" />
+                                        <Label Text="{Binding Date, StringFormat='{0:MMM dd, yyyy}'}"
+                                               FontSize="11"
+                                               TextColor="{StaticResource Gray500}" />
+                                    </VerticalStackLayout>
+
+                                    <Label Grid.Column="2"
+                                           Text="{Binding Amount, StringFormat='₹{0:N2}'}"
+                                           FontSize="16"
+                                           FontAttributes="Bold"
+                                           TextColor="#4CAF50"
+                                           VerticalOptions="Center" />
+                                </Grid>
+                            </Frame>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </RefreshView>
+</ContentPage>

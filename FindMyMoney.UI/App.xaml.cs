@@ -1,13 +1,26 @@
-﻿using FindMyMoney.Presentations.Login;
+using FindMyMoney.Presentations.Login;
 
 namespace FindMyMoney;
 
-public partial class App(LoginPage shell) : Microsoft.Maui.Controls.Application
+public partial class App : Microsoft.Maui.Controls.Application
 {
-    private readonly LoginPage _shell = shell;
+    private readonly IServiceProvider _serviceProvider;
+
+    public App(IServiceProvider serviceProvider)
+    {
+        _serviceProvider = serviceProvider;
+        InitializeComponent();
+    }
 
     protected override Window CreateWindow(IActivationState? activationState)
     {
-        return new Window(_shell);
+        var loginPage = _serviceProvider.GetRequiredService<LoginPage>();
+        var navPage = new NavigationPage(loginPage)
+        {
+            BarBackgroundColor = Color.FromArgb("#1A237E"),
+            BarTextColor = Colors.White
+        };
+        NavigationPage.SetHasNavigationBar(loginPage, false);
+        return new Window(navPage);
     }
 }
