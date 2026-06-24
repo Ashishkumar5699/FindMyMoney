@@ -22,6 +22,7 @@ public static class ApplicationRegistration
         // Register Business Services
         services.AddScoped<IExpenseService, ExpenseService>();
         services.AddScoped<IIncomeService, IncomeService>();
+        services.AddScoped<IEmiService, EmiService>();
 
         // Register Infrastructure layer
         services.AddInfrastructure(apiBaseUrl);

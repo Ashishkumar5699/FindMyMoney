@@ -1,0 +1,23 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace FindMyMoney.Infrastructure.Local.Entities;
+
+public class LocalEmi
+{
+    [Key]
+    public Guid Id { get; set; }
+    public Guid UserId { get; set; }
+    public string LoanName { get; set; } = string.Empty;
+    public string BankName { get; set; } = string.Empty;
+    public decimal TotalAmount { get; set; }
+    public decimal EmiAmount { get; set; }
+    public int TotalEmis { get; set; }
+    public int PaidEmis { get; set; }
+    public decimal InterestRate { get; set; }
+    public DateTime StartDate { get; set; }
+    public DateTime NextDueDate { get; set; }
+    public string Status { get; set; } = "Active";
+    public string? Description { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public SyncStatus SyncStatus { get; set; } = SyncStatus.Synced;
+}

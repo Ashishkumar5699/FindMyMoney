@@ -48,15 +48,15 @@ public class AuthService : IAuthService
 
             var response = await _authApiService.LoginAsync(username, password);
 
-            // Save token
-            // await _tokenService.SaveTokenAsync(response.Token);
+            if (!response.IsSuccess)
+            {
+                _logger.LogWarning("Login failed: {Error}", response.Error);
+                return Result<User>.Failure(response.Error ?? "Login failed");
+            }
 
             _logger.LogInformation("User logged in successfully: {Username}", username);
 
-            // Map response to User entity
-            // var user = MapToUser(response.Data);
-            var user = response.Data ?? throw new Exception("User data is null");
-            
+            var user = response.Data!;
             user.LastLoginAt = DateTime.UtcNow;
 
             return Result<User>.Success(user);
@@ -122,15 +122,15 @@ public class AuthService : IAuthService
 
             var response = await _authApiService.RegisterAsync(request);
 
-            // Save token
-            // await _tokenService.SaveTokenAsync(response.Token);
+            if (!response.IsSuccess)
+            {
+                _logger.LogWarning("Registration failed: {Error}", response.Error);
+                return Result<User>.Failure(response.Error ?? "Registration failed");
+            }
 
             _logger.LogInformation("User registered successfully: {Username}", username);
 
-            // Map response to User entity
-            // var user = MapToUser(response.Data)
-            var user = response.Data ?? throw new Exception("User data is null");
-            return Result<User>.Success(user);
+            return Result<User>.Success(response.Data!);
         }
         catch (Refit.ApiException apiEx)
         {

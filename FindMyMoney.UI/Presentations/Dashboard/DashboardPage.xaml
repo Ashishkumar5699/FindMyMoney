@@ -121,6 +121,14 @@
                                     FontSize="16"
                                     FontAttributes="Bold" />
                         </Grid>
+                        <Button Text="View EMI Tracker"
+                                BackgroundColor="#9C27B0"
+                                TextColor="White"
+                                Command="{Binding ViewEmisCommand}"
+                                CornerRadius="10"
+                                HeightRequest="46"
+                                FontSize="15"
+                                FontAttributes="Bold" />
                     </VerticalStackLayout>
                 </Frame>
 

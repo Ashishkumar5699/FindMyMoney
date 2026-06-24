@@ -37,6 +37,13 @@ public partial class RegisterViewModel : BaseViewModel
     }
 
     [RelayCommand]
+    private async Task GoToLogin()
+    {
+        if (Microsoft.Maui.Controls.Application.Current?.Windows[0].Page is NavigationPage navPage)
+            await navPage.PopAsync();
+    }
+
+    [RelayCommand]
     private async Task Register()
     {
         if (IsBusy)
@@ -78,13 +85,11 @@ public partial class RegisterViewModel : BaseViewModel
             if (result.IsSuccess)
             {
                 _logger.LogInformation("Registration successful for user: {Username}", Username);
-                SuccessMessage = "Registration successful! Redirecting...";
+                SuccessMessage = "Registration successful! Redirecting to login...";
 
-                // Wait a moment to show success message
                 await Task.Delay(1500);
-
-                // TODO: Navigate to main page or login page
-                // await Shell.Current.GoToAsync("///main");
+                if (Microsoft.Maui.Controls.Application.Current?.Windows[0].Page is NavigationPage navPage)
+                    await navPage.PopAsync();
             }
             else
             {

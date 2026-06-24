@@ -1,169 +1,117 @@
 using FindMyMoney.Domain.Common;
 using FindMyMoney.Domain.DTOs.Auth;
+using FindMyMoney.Domain.IService;
 using FindMyMoney.Domain.Models;
 using FindMyMoney.Domain.Repositories;
+using FindMyMoney.Infrastructure.ApiClients;
 using Microsoft.Extensions.Logging;
 
 namespace FindMyMoney.Infrastructure.Repositories;
 
-public class UserRepository : IUserRepository
+public class UserRepository(
+    IRegisterApiService registerApiService,
+    ILoginApiService loginApiService,
+    ITokenService tokenService,
+    ILogger<UserRepository> logger) : IUserRepository
 {
-    private readonly ILogger<UserRepository> _logger;
-    // TODO: Add database context when you implement data persistence
-
-    public UserRepository(ILogger<UserRepository> logger)
+    public async Task<Result<User>> RegisterAsync(RegisterRequest request)
     {
-        _logger = logger;
+        try
+        {
+            logger.LogInformation("Calling register API for {Username}", request.Username);
+            var apiResponse = await registerApiService.RegisterAsync(request);
+
+            logger.LogInformation("Register API raw response: HasErrors={HasErrors} Message={Message} DataIsNull={DataIsNull}",
+                apiResponse?.HasErrors, apiResponse?.Message, apiResponse?.Data == null);
+
+            if (apiResponse == null)
+                return Result<User>.Failure("No response from server");
+
+            if (apiResponse.HasErrors || apiResponse.Data == null)
+                return Result<User>.Failure(apiResponse.Message ?? "Registration failed");
+
+            logger.LogInformation("Register success: Token={TokenLen} chars, Username={Username}",
+                apiResponse.Data.Token.Length, apiResponse.Data.Username);
+
+            await tokenService.SaveTokenAsync(apiResponse.Data.Token);
+
+            return Result<User>.Success(new User
+            {
+                Id = Guid.NewGuid(),
+                Username = apiResponse.Data.Username,
+                Email = apiResponse.Data.Email,
+                CreatedAt = DateTime.UtcNow,
+                IsActive = true
+            });
+        }
+        catch (Refit.ApiException apiEx)
+        {
+            logger.LogError(apiEx, "API error during registration: {StatusCode} {Content}", apiEx.StatusCode, apiEx.Content);
+            return Result<User>.Failure($"Registration failed ({(int)apiEx.StatusCode}): {apiEx.Content ?? apiEx.Message}");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error during registration: {Type} {Message}", ex.GetType().Name, ex.Message);
+            return Result<User>.Failure($"An error occurred: {ex.GetType().Name} - {ex.Message}");
+        }
     }
 
     public async Task<Result<User>> LoginAsync(string username, string password)
     {
-        _logger.LogInformation("Authenticating user: {Username}", username);
-
         try
         {
-            // TODO: Implement actual authentication logic with database
-            // For now, this is a placeholder
-            await Task.Delay(100); // Simulate async operation
+            logger.LogInformation("Calling login API for {Username}", username);
+            var apiResponse = await loginApiService.LoginAsync(new LoginRequest { Username = username, Password = password });
 
-            // Mock implementation - replace with real database query
-            _logger.LogWarning("Using mock authentication - implement real database logic");
+            logger.LogInformation("Login API raw response: HasErrors={HasErrors} Message={Message} DataIsNull={DataIsNull}",
+                apiResponse?.HasErrors, apiResponse?.Message, apiResponse?.Data == null);
 
-            return Result<User>.Failure("Authentication not yet implemented");
+            if (apiResponse == null)
+                return Result<User>.Failure("No response from server");
+
+            if (apiResponse.HasErrors || apiResponse.Data == null)
+                return Result<User>.Failure(apiResponse.Message ?? "Login failed");
+
+            await tokenService.SaveTokenAsync(apiResponse.Data.Token);
+
+            return Result<User>.Success(new User
+            {
+                Username = apiResponse.Data.Username,
+                Email = apiResponse.Data.Email,
+                CreatedAt = DateTime.UtcNow,
+                LastLoginAt = DateTime.UtcNow,
+                IsActive = true
+            });
+        }
+        catch (Refit.ApiException apiEx)
+        {
+            logger.LogError(apiEx, "API error during login: {StatusCode} {Content}", apiEx.StatusCode, apiEx.Content);
+            return Result<User>.Failure($"Login failed ({(int)apiEx.StatusCode}): {apiEx.Content ?? apiEx.Message}");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during authentication for user: {Username}", username);
-            return Result<User>.Failure("An error occurred during authentication");
-        }
-    }
-
-    public async Task<Result<User>> GetByIdAsync(Guid userId)
-    {
-        _logger.LogInformation("Getting user by ID: {UserId}", userId);
-
-        try
-        {
-            // TODO: Implement database query
-            await Task.CompletedTask;
-            return Result<User>.Failure("Not implemented");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting user by ID: {UserId}", userId);
-            return Result<User>.Failure("An error occurred while retrieving user");
-        }
-    }
-
-    public async Task<Result<User>> GetByUsernameAsync(string username)
-    {
-        _logger.LogInformation("Getting user by username: {Username}", username);
-
-        try
-        {
-            // TODO: Implement database query
-            await Task.CompletedTask;
-            return Result<User>.Failure("Not implemented");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting user by username: {Username}", username);
-            return Result<User>.Failure("An error occurred while retrieving user");
-        }
-    }
-
-    public async Task<Result<User>> CreateAsync(User user)
-    {
-        _logger.LogInformation("Creating new user: {Username}", user.Username);
-
-        try
-        {
-            // TODO: Implement database insert
-            await Task.CompletedTask;
-            return Result<User>.Failure("Not implemented");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating user: {Username}", user.Username);
-            return Result<User>.Failure("An error occurred while creating user");
-        }
-    }
-
-    public async Task<Result> UpdateAsync(User user)
-    {
-        _logger.LogInformation("Updating user: {UserId}", user.Id);
-
-        try
-        {
-            // TODO: Implement database update
-            await Task.CompletedTask;
-            return Result.Failure("Not implemented");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating user: {UserId}", user.Id);
-            return Result.Failure("An error occurred while updating user");
-        }
-    }
-
-    public async Task<Result> DeleteAsync(Guid userId)
-    {
-        _logger.LogInformation("Deleting user: {UserId}", userId);
-
-        try
-        {
-            // TODO: Implement database delete
-            await Task.CompletedTask;
-            return Result.Failure("Not implemented");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting user: {UserId}", userId);
-            return Result.Failure("An error occurred while deleting user");
-        }
-    }
-
-    public async Task<Result<User>> RegisterAsync(RegisterRequest request)
-    {
-        _logger.LogInformation("Registering new user: {Username}", request.Username);
-
-        try
-        {
-            // TODO: Implement actual registration logic with database
-            // For now, this is a placeholder
-            await Task.CompletedTask;
-
-            // Mock implementation - replace with real database logic
-            _logger.LogWarning("Using mock registration - implement real database logic");
-
-            return Result<User>.Failure("Registration not yet implemented");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during registration for user: {Username}", request.Username);
-            return Result<User>.Failure("An error occurred during registration");
+            logger.LogError(ex, "Error during login: {Type} {Message}", ex.GetType().Name, ex.Message);
+            return Result<User>.Failure($"An error occurred: {ex.GetType().Name} - {ex.Message}");
         }
     }
 
     public async Task<Result<User>> ValidateTokenAsync(ValidateTokenRequest request)
     {
-        _logger.LogInformation("Validating token");
-
         try
         {
-            // TODO: Implement actual token validation logic
-            // For now, this is a placeholder
-            await Task.CompletedTask;
-
-            // Mock implementation - replace with real token validation logic
-            _logger.LogWarning("Using mock token validation - implement real validation logic");
-
-            return Result<User>.Failure("Token validation not yet implemented");
+            await loginApiService.ValidateTokenAsync(request);
+            return Result<User>.Success(new User());
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during token validation");
-            return Result<User>.Failure("An error occurred during token validation");
+            logger.LogError(ex, "Error validating token");
+            return Result<User>.Failure(ex.Message);
         }
     }
+
+    public Task<Result<User>> GetByIdAsync(Guid userId) => Task.FromResult(Result<User>.Failure("Not implemented"));
+    public Task<Result<User>> GetByUsernameAsync(string username) => Task.FromResult(Result<User>.Failure("Not implemented"));
+    public Task<Result<User>> CreateAsync(User user) => Task.FromResult(Result<User>.Failure("Not implemented"));
+    public Task<Result> UpdateAsync(User user) => Task.FromResult(Result.Failure("Not implemented"));
+    public Task<Result> DeleteAsync(Guid userId) => Task.FromResult(Result.Failure("Not implemented"));
 }

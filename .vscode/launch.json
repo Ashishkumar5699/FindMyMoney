@@ -1,0 +1,18 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug (Android)",
+            "type": "dotnet",
+            "request": "launch",
+            "projectPath": "${workspaceFolder}/FindMyMoney.UI/FindMyMoney.UI.csproj",
+            "target": "device",
+            "logCatArguments": [
+                "DOTNET:D",
+                "mono-stdout:V",
+                "mono:D",
+                "*:W"
+            ]
+        }
+    ]
+}

@@ -249,42 +249,37 @@ public partial class DashboardPageViewModel : BaseViewModel
         await Shell.Current.GoToAsync("add-expense");
     }
 
-    /// <summary>
-    /// Navigates to the add income page
-    /// </summary>
     [RelayCommand]
     private async Task AddIncome()
     {
         _logger.LogInformation("Navigate to Add Income page");
-        // TODO: Implement navigation to add income page
-        // await Shell.Current.GoToAsync("add-income");
+        await Shell.Current.GoToAsync("add-income");
     }
 
-    /// <summary>
-    /// Navigates to the expenses list page
-    /// </summary>
     [RelayCommand]
     private async Task ViewAllExpenses()
     {
         _logger.LogInformation("Navigate to All Expenses page");
-        // TODO: Implement navigation to expenses list page
-        // await Shell.Current.GoToAsync("expenses");
+        await Shell.Current.GoToAsync("expenses");
     }
 
-    /// <summary>
-    /// Navigates to the income list page
-    /// </summary>
     [RelayCommand]
     private async Task ViewAllIncomes()
     {
         _logger.LogInformation("Navigate to All Incomes page");
-        // TODO: Implement navigation to incomes list page
-        // await Shell.Current.GoToAsync("incomes");
+        await Shell.Current.GoToAsync("incomes");
     }
 
     /// <summary>
     /// Refreshes the dashboard data
     /// </summary>
+    [RelayCommand]
+    private async Task ViewEmis()
+    {
+        _logger.LogInformation("Navigate to EMI Tracker");
+        await Shell.Current.GoToAsync("///Emis");
+    }
+
     [RelayCommand]
     private async Task Refresh()
     {

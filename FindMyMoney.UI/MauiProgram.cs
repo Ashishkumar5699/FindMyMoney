@@ -38,10 +38,18 @@ public static class MauiProgram
 
 		builder.Services.RegisterUIs(apiBaseUrl);
 
-#if DEBUG
 		builder.Logging.AddDebug();
-#endif
+		builder.Logging.SetMinimumLevel(LogLevel.Debug);
 
-		return builder.Build();
+		var app = builder.Build();
+
+		// Ensure local SQLite DB is created on first run
+		using (var scope = app.Services.CreateScope())
+		{
+			var dbContext = scope.ServiceProvider.GetRequiredService<FindMyMoney.Infrastructure.Local.LocalDbContext>();
+			dbContext.Database.EnsureCreated();
+		}
+
+		return app;
 	}
 }
