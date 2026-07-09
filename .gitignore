@@ -1,33 +1,35 @@
-## Ignore build outputs
-[Bb]in/
-[Oo]bj/
+# Dart / Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+# pubspec.lock intentionally committed for apps (reproducible builds)
 
-## User-specific files
-*.user
-*.userosscache
-*.suo
-*.userprefs
+# Build outputs
+build/
+*.iml
 
-## Build results
-[Dd]ebug/
-[Rr]elease/
-x64/
-x86/
-[Aa][Rr][Mm]/
-[Aa][Rr][Mm]64/
-bld/
-[Bb]ld/
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
 
-## Visual Studio cache/options
-.vs/
-*.vsidx
-*.vspscc
-*.vspx
-
-## NuGet Packages
-*.nupkg
-**/packages/*
-!**/packages/build/
-
-## macOS
+# macOS
 .DS_Store
+
+# Secrets
+.env
+.env.local
+*.env
+
+# Test coverage
+coverage/
+
+# iOS / Android generated
+ios/Pods/
+android/.gradle/
+android/local.properties
+
+# Vercel (local link only — project.json has secrets)
+.vercel/
