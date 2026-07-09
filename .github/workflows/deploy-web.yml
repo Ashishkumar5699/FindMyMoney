@@ -22,9 +22,11 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
+        working-directory: Flutter
 
       - name: Build web
         run: flutter build web --release --web-renderer canvaskit
+        working-directory: Flutter
 
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
@@ -32,5 +34,5 @@ jobs:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          working-directory: build/web
+          working-directory: Flutter/build/web
           vercel-args: '--prod'

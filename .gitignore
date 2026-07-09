@@ -1,35 +1,45 @@
-# Dart / Flutter
+# ── Flutter ──────────────────────────────────────────────────────────────────
+Flutter/.dart_tool/
+Flutter/.flutter-plugins
+Flutter/.flutter-plugins-dependencies
+Flutter/.packages
+# pubspec.lock intentionally committed (reproducible builds)
+
+Flutter/build/
+Flutter/*.iml
+
+# iOS / Android generated
+Flutter/ios/Pods/
+Flutter/android/.gradle/
+Flutter/android/local.properties
+
+# Vercel (local link only)
+Flutter/.vercel/
+
+# ── MAUI / .NET ──────────────────────────────────────────────────────────────
+MAUI/**/bin/
+MAUI/**/obj/
+MAUI/**/*.user
+MAUI/**/*.lscache
+MAUI/**/*.suo
+MAUI/**/.vs/
+
+# ── IDE / OS ──────────────────────────────────────────────────────────────────
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# ── Root-level Flutter tool cache (if running from repo root) ─────────────────
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
-.packages
-# pubspec.lock intentionally committed for apps (reproducible builds)
-
-# Build outputs
 build/
-*.iml
 
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# macOS
-.DS_Store
-
-# Secrets
+# ── Secrets ───────────────────────────────────────────────────────────────────
 .env
 .env.local
 *.env
 
 # Test coverage
 coverage/
-
-# iOS / Android generated
-ios/Pods/
-android/.gradle/
-android/local.properties
-
-# Vercel (local link only — project.json has secrets)
-.vercel/
