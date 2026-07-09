@@ -1,33 +1,45 @@
-## Ignore build outputs
-[Bb]in/
-[Oo]bj/
+# ── Flutter ──────────────────────────────────────────────────────────────────
+Flutter/.dart_tool/
+Flutter/.flutter-plugins
+Flutter/.flutter-plugins-dependencies
+Flutter/.packages
+# pubspec.lock intentionally committed (reproducible builds)
 
-## User-specific files
-*.user
-*.userosscache
-*.suo
-*.userprefs
+Flutter/build/
+Flutter/*.iml
 
-## Build results
-[Dd]ebug/
-[Rr]elease/
-x64/
-x86/
-[Aa][Rr][Mm]/
-[Aa][Rr][Mm]64/
-bld/
-[Bb]ld/
+# iOS / Android generated
+Flutter/ios/Pods/
+Flutter/android/.gradle/
+Flutter/android/local.properties
 
-## Visual Studio cache/options
-.vs/
-*.vsidx
-*.vspscc
-*.vspx
+# Vercel (local link only)
+Flutter/.vercel/
 
-## NuGet Packages
-*.nupkg
-**/packages/*
-!**/packages/build/
+# ── MAUI / .NET ──────────────────────────────────────────────────────────────
+MAUI/**/bin/
+MAUI/**/obj/
+MAUI/**/*.user
+MAUI/**/*.lscache
+MAUI/**/*.suo
+MAUI/**/.vs/
 
-## macOS
+# ── IDE / OS ──────────────────────────────────────────────────────────────────
+.idea/
+*.swp
+*.swo
 .DS_Store
+
+# ── Root-level Flutter tool cache (if running from repo root) ─────────────────
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+
+# ── Secrets ───────────────────────────────────────────────────────────────────
+.env
+.env.local
+*.env
+
+# Test coverage
+coverage/

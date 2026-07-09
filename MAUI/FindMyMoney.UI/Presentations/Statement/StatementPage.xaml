@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="FindMyMoney.Presentations.Statement.StatementPage"
+             xmlns:vm="clr-namespace:FindMyMoney.Presentations.Statement"
+             x:DataType="vm:StatementViewModel"
+             Title="Statement"
+             BackgroundColor="{StaticResource Gray100}">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="↻" Command="{Binding LoadStatementCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="14">
+
+            <!-- Period Selector -->
+            <Frame BackgroundColor="White" CornerRadius="14" HasShadow="True" Padding="16,12">
+                <Grid ColumnDefinitions="Auto,*,Auto" VerticalOptions="Center">
+                    <Button Grid.Column="0" Text="‹" WidthRequest="44" HeightRequest="44"
+                            BackgroundColor="{StaticResource Gray200}" TextColor="{StaticResource Gray900}"
+                            CornerRadius="22" FontSize="22"
+                            Command="{Binding PreviousMonthCommand}" />
+
+                    <VerticalStackLayout Grid.Column="1" HorizontalOptions="Center" Spacing="2">
+                        <Label Text="{Binding SelectedMonthName}" FontSize="20" FontAttributes="Bold"
+                               TextColor="{StaticResource Primary}" HorizontalOptions="Center" />
+                        <Label Text="{Binding SelectedYear}" FontSize="14" TextColor="{StaticResource Gray600}"
+                               HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+
+                    <Button Grid.Column="2" Text="›" WidthRequest="44" HeightRequest="44"
+                            BackgroundColor="{StaticResource Gray200}" TextColor="{StaticResource Gray900}"
+                            CornerRadius="22" FontSize="22"
+                            Command="{Binding NextMonthCommand}" />
+                </Grid>
+            </Frame>
+
+            <!-- Loading -->
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
+                               Color="{StaticResource Primary}" HeightRequest="40" />
+
+            <!-- Error -->
+            <Label Text="{Binding ErrorMessage}"
+                   IsVisible="{Binding ErrorMessage, Converter={StaticResource StringIsNotNullOrEmptyConverter}}"
+                   TextColor="Red" FontSize="14" HorizontalOptions="Center" />
+
+            <!-- Summary Cards -->
+            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10"
+                  IsVisible="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}">
+
+                <!-- Income -->
+                <Frame Grid.Column="0" BackgroundColor="#E8F5E9" CornerRadius="12" Padding="12,10" HasShadow="False">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Income" FontSize="11" TextColor="#388E3C" HorizontalOptions="Center" />
+                        <Label Text="{Binding TotalIncome, StringFormat='₹{0:N0}'}"
+                               FontSize="15" FontAttributes="Bold" TextColor="#2E7D32"
+                               HorizontalOptions="Center" LineBreakMode="TailTruncation" />
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Expense -->
+                <Frame Grid.Column="1" BackgroundColor="#FFEBEE" CornerRadius="12" Padding="12,10" HasShadow="False">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Expense" FontSize="11" TextColor="#C62828" HorizontalOptions="Center" />
+                        <Label Text="{Binding TotalExpense, StringFormat='₹{0:N0}'}"
+                               FontSize="15" FontAttributes="Bold" TextColor="#C62828"
+                               HorizontalOptions="Center" LineBreakMode="TailTruncation" />
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Balance -->
+                <Frame Grid.Column="2" BackgroundColor="#E3F2FD" CornerRadius="12" Padding="12,10" HasShadow="False">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Balance" FontSize="11" TextColor="#1565C0" HorizontalOptions="Center" />
+                        <Label Text="{Binding NetBalance, StringFormat='₹{0:N0}'}"
+                               FontSize="15" FontAttributes="Bold" TextColor="#1565C0"
+                               HorizontalOptions="Center" LineBreakMode="TailTruncation" />
+                    </VerticalStackLayout>
+                </Frame>
+            </Grid>
+
+            <!-- No data -->
+            <Frame BackgroundColor="White" CornerRadius="14" Padding="30"
+                   IsVisible="{Binding HasData, Converter={StaticResource InvertedBoolConverter}}">
+                <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
+                    <Label Text="📊" FontSize="40" HorizontalOptions="Center" />
+                    <Label Text="No data for this period" FontSize="16" TextColor="{StaticResource Gray600}"
+                           HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Category Breakdown -->
+            <Frame BackgroundColor="White" CornerRadius="14" HasShadow="True" Padding="16"
+                   IsVisible="{Binding HasData}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Expense by Category" FontSize="16" FontAttributes="Bold"
+                           TextColor="{StaticResource Gray900}" />
+
+                    <CollectionView ItemsSource="{Binding CategoryBreakdown}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="x:Object">
+                                <VerticalStackLayout Padding="0,6" Spacing="6">
+                                    <!-- Category row -->
+                                    <Grid ColumnDefinitions="*,Auto,Auto">
+                                        <Label Grid.Column="0"
+                                               Text="{Binding Category}"
+                                               FontSize="15" FontAttributes="Bold"
+                                               TextColor="{StaticResource Gray900}"
+                                               VerticalOptions="Center" />
+                                        <Label Grid.Column="1"
+                                               Text="{Binding Percentage, StringFormat='{0:F1}%'}"
+                                               FontSize="12" TextColor="{StaticResource Gray500}"
+                                               VerticalOptions="Center" Margin="0,0,8,0" />
+                                        <Label Grid.Column="2"
+                                               Text="{Binding Total, StringFormat='₹{0:N0}'}"
+                                               FontSize="15" FontAttributes="Bold"
+                                               TextColor="#C62828" VerticalOptions="Center" />
+                                    </Grid>
+
+                                    <!-- Progress bar -->
+                                    <ProgressBar Progress="{Binding Percentage, Converter={StaticResource PercentageToProgressConverter}}"
+                                                 ProgressColor="{StaticResource Primary}"
+                                                 BackgroundColor="{StaticResource Gray200}"
+                                                 HeightRequest="6" />
+
+                                    <!-- Sub-categories -->
+                                    <CollectionView ItemsSource="{Binding SubCategories}" Margin="12,0,0,0">
+                                        <CollectionView.ItemTemplate>
+                                            <DataTemplate x:DataType="x:Object">
+                                                <Grid ColumnDefinitions="*,Auto" Padding="0,2">
+                                                    <Label Grid.Column="0" Text="{Binding SubCategory}"
+                                                           FontSize="13" TextColor="{StaticResource Gray600}" />
+                                                    <Label Grid.Column="1" Text="{Binding Total, StringFormat='₹{0:N0}'}"
+                                                           FontSize="13" TextColor="{StaticResource Gray700}" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </CollectionView.ItemTemplate>
+                                    </CollectionView>
+
+                                    <BoxView HeightRequest="1" BackgroundColor="{StaticResource Gray200}" />
+                                </VerticalStackLayout>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </Frame>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

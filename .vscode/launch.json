@@ -5,7 +5,7 @@
             "name": "Debug (Android)",
             "type": "dotnet",
             "request": "launch",
-            "projectPath": "${workspaceFolder}/FindMyMoney.UI/FindMyMoney.UI.csproj",
+            "projectPath": "${workspaceFolder}/MAUI/FindMyMoney.UI/FindMyMoney.UI.csproj",
             "target": "device",
             "logCatArguments": [
                 "DOTNET:D",
