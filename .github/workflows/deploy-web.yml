@@ -25,14 +25,17 @@ jobs:
         working-directory: Flutter
 
       - name: Build web
-        run: flutter build web --release --web-renderer canvaskit
+        run: flutter build web --release
         working-directory: Flutter
+
+      - name: Copy vercel.json into build output
+        run: cp Flutter/vercel.json Flutter/build/web/vercel.json
 
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-org-id: team_UtKuX5197XYDwbUS3o7wmqXO
+          vercel-project-id: prj_pZDOohEXxapqYp79fZhbNuBR86M1
           working-directory: Flutter/build/web
           vercel-args: '--prod'
