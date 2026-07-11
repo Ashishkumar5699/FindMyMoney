@@ -9,6 +9,10 @@ jobs:
     name: Flutter Web → Vercel
     runs-on: ubuntu-latest
 
+    env:
+      VERCEL_ORG_ID: team_UtKuX5197XYDwbUS3o7wmqXO
+      VERCEL_PROJECT_ID: prj_pZDOohEXxapqYp79fZhbNuBR86M1
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,19 +37,10 @@ jobs:
 
       - name: Deploy to Vercel (production)
         if: github.ref == 'refs/heads/Stable'
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: team_UtKuX5197XYDwbUS3o7wmqXO
-          vercel-project-id: prj_pZDOohEXxapqYp79fZhbNuBR86M1
-          working-directory: Flutter/build/web
-          vercel-args: '--prod'
+        run: npx vercel --prod --token ${{ secrets.VERCEL_TOKEN }} --yes
+        working-directory: Flutter/build/web
 
       - name: Deploy to Vercel (preview / dev)
         if: github.ref == 'refs/heads/PreProduction'
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: team_UtKuX5197XYDwbUS3o7wmqXO
-          vercel-project-id: prj_pZDOohEXxapqYp79fZhbNuBR86M1
-          working-directory: Flutter/build/web
+        run: npx vercel --token ${{ secrets.VERCEL_TOKEN }} --yes
+        working-directory: Flutter/build/web
