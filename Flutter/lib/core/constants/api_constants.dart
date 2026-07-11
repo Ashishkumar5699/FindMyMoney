@@ -1,20 +1,16 @@
 class ApiConstants {
-  static const String baseUrl =
-      'https://pnjbdetnetdevwin-bwfweggteaefh7au.centralindia-01.azurewebsites.net';
+  static const String baseUrl = 'https://api.findmymoney.pnjb.in';
 
   static const String health = '/api/health';
-  static const String login = '/api/findmymoney/Auth/login';
-  static const String register = '/api/findmymoney/Auth/register';
+  static const String login = '/api/auth/login';
+  static const String register = '/api/auth/register';
 
-  static String expenses(String userId) => '/api/findmymoney/Expenses/$userId';
-  static String expense(String userId, String id) =>
-      '/api/findmymoney/Expenses/$userId/$id';
+  static const String expenses = '/api/expenses';
+  static String expense(String id) => '/api/expenses/$id';
 
-  static String incomes(String userId) => '/api/findmymoney/Incomes/$userId';
-  static String income(String userId, String id) =>
-      '/api/findmymoney/Incomes/$userId/$id';
+  static const String incomes = '/api/incomes';
+  static String income(String id) => '/api/incomes/$id';
 
-  static String emis(String userId) => '/api/findmymoney/Emis/$userId';
-  static String emi(String userId, String id) =>
-      '/api/findmymoney/Emis/$userId/$id';
+  static const String emis = '/api/emis';
+  static String emi(String id) => '/api/emis/$id';
 }

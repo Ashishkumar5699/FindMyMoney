@@ -17,7 +17,7 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
     String? category,
   }) async {
     final response = await _dio.get(
-      ApiConstants.expenses(userId),
+      ApiConstants.expenses,
       queryParameters: {
         'year': year,
         'month': month,
@@ -25,9 +25,7 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
       }..removeWhere((_, v) => v == null),
     );
     final list = unwrap(response) as List<dynamic>;
-    return list
-        .map((e) => Expense.fromJson(e as Map<String, dynamic>))
-        .toList();
+    return list.map((e) => Expense.fromJson(e as Map<String, dynamic>)).toList();
   }
 
   @override
@@ -40,13 +38,13 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
     required DateTime date,
   }) async {
     final response = await _dio.post(
-      ApiConstants.expenses(userId),
+      ApiConstants.expenses,
       data: {
         'amount': amount,
         'category': category,
         'subCategory': subCategory,
         'description': description,
-        'date': date.toIso8601String(),
+        'date': date.toUtc().toIso8601String(),
       },
     );
     return Expense.fromJson(unwrap(response) as Map<String, dynamic>);
@@ -63,13 +61,13 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
     required DateTime date,
   }) async {
     final response = await _dio.put(
-      ApiConstants.expense(userId, id),
+      ApiConstants.expense(id),
       data: {
         'amount': amount,
         'category': category,
         'subCategory': subCategory,
         'description': description,
-        'date': date.toIso8601String(),
+        'date': date.toUtc().toIso8601String(),
       },
     );
     return Expense.fromJson(unwrap(response) as Map<String, dynamic>);
@@ -77,6 +75,6 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
 
   @override
   Future<void> deleteExpense(String userId, String id) async {
-    await _dio.delete(ApiConstants.expense(userId, id));
+    await _dio.delete(ApiConstants.expense(id));
   }
 }

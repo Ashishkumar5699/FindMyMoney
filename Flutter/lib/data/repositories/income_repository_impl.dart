@@ -16,16 +16,14 @@ class IncomeRepositoryImpl implements IncomeRepository {
     int? month,
   }) async {
     final response = await _dio.get(
-      ApiConstants.incomes(userId),
+      ApiConstants.incomes,
       queryParameters: {
         'year': year,
         'month': month,
       }..removeWhere((_, v) => v == null),
     );
     final list = unwrap(response) as List<dynamic>;
-    return list
-        .map((e) => Income.fromJson(e as Map<String, dynamic>))
-        .toList();
+    return list.map((e) => Income.fromJson(e as Map<String, dynamic>)).toList();
   }
 
   @override
@@ -37,12 +35,12 @@ class IncomeRepositoryImpl implements IncomeRepository {
     required DateTime date,
   }) async {
     final response = await _dio.post(
-      ApiConstants.incomes(userId),
+      ApiConstants.incomes,
       data: {
         'amount': amount,
         'source': source,
         'description': description,
-        'date': date.toIso8601String(),
+        'date': date.toUtc().toIso8601String(),
       },
     );
     return Income.fromJson(unwrap(response) as Map<String, dynamic>);
@@ -58,12 +56,12 @@ class IncomeRepositoryImpl implements IncomeRepository {
     required DateTime date,
   }) async {
     final response = await _dio.put(
-      ApiConstants.income(userId, id),
+      ApiConstants.income(id),
       data: {
         'amount': amount,
         'source': source,
         'description': description,
-        'date': date.toIso8601String(),
+        'date': date.toUtc().toIso8601String(),
       },
     );
     return Income.fromJson(unwrap(response) as Map<String, dynamic>);
@@ -71,6 +69,6 @@ class IncomeRepositoryImpl implements IncomeRepository {
 
   @override
   Future<void> deleteIncome(String userId, String id) async {
-    await _dio.delete(ApiConstants.income(userId, id));
+    await _dio.delete(ApiConstants.income(id));
   }
 }

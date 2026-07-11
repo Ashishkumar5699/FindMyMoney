@@ -12,10 +12,8 @@ class EmiRepositoryImpl implements EmiRepository {
   @override
   Future<List<Emi>> getEmis(String userId, {String? status}) async {
     final response = await _dio.get(
-      ApiConstants.emis(userId),
-      queryParameters: {
-        'status': status,
-      }..removeWhere((_, v) => v == null),
+      ApiConstants.emis,
+      queryParameters: {'status': status}..removeWhere((_, v) => v == null),
     );
     final list = unwrap(response) as List<dynamic>;
     return list.map((e) => Emi.fromJson(e as Map<String, dynamic>)).toList();
@@ -37,7 +35,7 @@ class EmiRepositoryImpl implements EmiRepository {
     String? description,
   }) async {
     final response = await _dio.post(
-      ApiConstants.emis(userId),
+      ApiConstants.emis,
       data: {
         'loanName': loanName,
         'bankName': bankName,
@@ -46,8 +44,8 @@ class EmiRepositoryImpl implements EmiRepository {
         'totalEmis': totalEmis,
         'paidEmis': paidEmis,
         'interestRate': interestRate,
-        'startDate': startDate.toIso8601String(),
-        'nextDueDate': nextDueDate.toIso8601String(),
+        'startDate': startDate.toUtc().toIso8601String(),
+        'nextDueDate': nextDueDate.toUtc().toIso8601String(),
         'status': status,
         'description': description,
       },
@@ -72,7 +70,7 @@ class EmiRepositoryImpl implements EmiRepository {
     String? description,
   }) async {
     final response = await _dio.put(
-      ApiConstants.emi(userId, id),
+      ApiConstants.emi(id),
       data: {
         'loanName': loanName,
         'bankName': bankName,
@@ -81,8 +79,8 @@ class EmiRepositoryImpl implements EmiRepository {
         'totalEmis': totalEmis,
         'paidEmis': paidEmis,
         'interestRate': interestRate,
-        'startDate': startDate.toIso8601String(),
-        'nextDueDate': nextDueDate.toIso8601String(),
+        'startDate': startDate.toUtc().toIso8601String(),
+        'nextDueDate': nextDueDate.toUtc().toIso8601String(),
         'status': status,
         'description': description,
       },
@@ -92,6 +90,6 @@ class EmiRepositoryImpl implements EmiRepository {
 
   @override
   Future<void> deleteEmi(String userId, String id) async {
-    await _dio.delete(ApiConstants.emi(userId, id));
+    await _dio.delete(ApiConstants.emi(id));
   }
 }
