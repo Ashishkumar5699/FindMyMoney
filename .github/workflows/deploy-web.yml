@@ -2,7 +2,7 @@ name: Build & Deploy Web
 
 on:
   push:
-    branches: [Stable]
+    branches: [Stable, PreProduction]
 
 jobs:
   deploy:
@@ -31,7 +31,8 @@ jobs:
       - name: Copy vercel.json into build output
         run: cp Flutter/vercel.json Flutter/build/web/vercel.json
 
-      - name: Deploy to Vercel
+      - name: Deploy to Vercel (production)
+        if: github.ref == 'refs/heads/Stable'
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
@@ -39,3 +40,12 @@ jobs:
           vercel-project-id: prj_pZDOohEXxapqYp79fZhbNuBR86M1
           working-directory: Flutter/build/web
           vercel-args: '--prod'
+
+      - name: Deploy to Vercel (preview / dev)
+        if: github.ref == 'refs/heads/PreProduction'
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: team_UtKuX5197XYDwbUS3o7wmqXO
+          vercel-project-id: prj_pZDOohEXxapqYp79fZhbNuBR86M1
+          working-directory: Flutter/build/web
