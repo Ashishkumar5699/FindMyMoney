@@ -1,0 +1,44 @@
+name: Deploy Next.js Web (BFF + Desktop UI)
+
+on:
+  push:
+    branches: [Stable, PreProduction]
+    paths:
+      - 'Web/**'
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_WEB_PROJECT_ID }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Web
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: Web/package-lock.json
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+        env:
+          DOTNET_BASE_URL: ${{ secrets.DOTNET_BASE_URL }}
+          DOTNET_JWT_SECRET: ${{ secrets.DOTNET_JWT_SECRET }}
+
+      - name: Deploy to Vercel (Production — Stable branch)
+        if: github.ref == 'refs/heads/Stable'
+        run: npx vercel --prod --token ${{ secrets.VERCEL_TOKEN }} --yes
+
+      - name: Deploy to Vercel (Preview — PreProduction branch)
+        if: github.ref == 'refs/heads/PreProduction'
+        run: npx vercel --token ${{ secrets.VERCEL_TOKEN }} --yes
