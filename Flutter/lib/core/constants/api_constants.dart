@@ -1,5 +1,5 @@
 class ApiConstants {
-  static const String baseUrl = 'https://api.findmymoney.pnjb.in';
+  static const String baseUrl = 'https://findmymoney.pnjb.in';
 
   static const String health = '/api/health';
   static const String login = '/api/auth/login';
