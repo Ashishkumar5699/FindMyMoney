@@ -7,9 +7,9 @@ import { setAuth } from '@/stores/auth';
 export default function LoginPage() {
   const router = useRouter();
   const [tab, setTab] = useState<'login' | 'register'>('login');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -20,8 +20,8 @@ export default function LoginPage() {
     try {
       const path = tab === 'login' ? '/api/auth/login' : '/api/auth/register';
       const body = tab === 'login'
-        ? { email, password }
-        : { email, password, name };
+        ? { username, password }
+        : { username, email, password };
 
       const res = await fetch(path, {
         method: 'POST',
@@ -81,10 +81,10 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit}>
+          <input style={inputStyle} placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} required />
           {tab === 'register' && (
-            <input style={inputStyle} placeholder="Full name" value={name} onChange={e => setName(e.target.value)} required />
+            <input style={inputStyle} type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
           )}
-          <input style={inputStyle} type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
           <input style={inputStyle} type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
           {error && <p style={{ color: '#ef4444', fontSize: 13, margin: '-4px 0 12px' }}>{error}</p>}
           <button type="submit" style={btnStyle} disabled={loading}>
