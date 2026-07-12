@@ -42,22 +42,22 @@ export default function DashboardPage() {
         <p style={{ color: '#94a3b8' }}>Loading…</p>
       ) : (
         <>
-          <div style={{ display: 'flex', gap: 16, marginBottom: 32, flexWrap: 'wrap' }}>
-            <div style={cardStyle('#3b82f6')}>
+          <div className="stat-cards">
+            <div className="stat-card" style={{ background: '#3b82f6' }}>
               <div style={{ fontSize: 13, opacity: 0.85, marginBottom: 4 }}>Total Income</div>
-              <div style={{ fontSize: 24, fontWeight: 700 }}>{fmt(totalIncome)}</div>
+              <div style={{ fontSize: 22, fontWeight: 700 }}>{fmt(totalIncome)}</div>
             </div>
-            <div style={cardStyle('#ef4444')}>
+            <div className="stat-card" style={{ background: '#ef4444' }}>
               <div style={{ fontSize: 13, opacity: 0.85, marginBottom: 4 }}>Total Expenses</div>
-              <div style={{ fontSize: 24, fontWeight: 700 }}>{fmt(totalExpense)}</div>
+              <div style={{ fontSize: 22, fontWeight: 700 }}>{fmt(totalExpense)}</div>
             </div>
-            <div style={cardStyle(balance >= 0 ? '#10b981' : '#f59e0b')}>
+            <div className="stat-card" style={{ background: balance >= 0 ? '#10b981' : '#f59e0b' }}>
               <div style={{ fontSize: 13, opacity: 0.85, marginBottom: 4 }}>Balance</div>
-              <div style={{ fontSize: 24, fontWeight: 700 }}>{fmt(balance)}</div>
+              <div style={{ fontSize: 22, fontWeight: 700 }}>{fmt(balance)}</div>
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+          <div className="two-col">
             <Section title="Recent Expenses" items={expenses.slice(0, 5).map(e => ({
               label: e.category, sub: e.description, amount: -e.amount, date: e.date,
             }))} />

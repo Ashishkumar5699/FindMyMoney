@@ -63,15 +63,15 @@ export default function StatementPage() {
 
       {loading ? <p style={{ color: '#94a3b8' }}>Loading…</p> : (
         <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 28 }}>
+          <div className="stat-cards" style={{ marginBottom: 28 }}>
             <Card label="Income" value={fmt(totalIncome)} color="#10b981" />
             <Card label="Expenses" value={fmt(totalExpense)} color="#ef4444" />
             <Card label="EMIs (active)" value={fmt(totalEmi)} color="#f59e0b" />
             <Card label="Net" value={fmt(net)} color={net >= 0 ? '#3b82f6' : '#ef4444'} />
           </div>
 
-          <div style={{ background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 6px rgba(0,0,0,0.05)' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div className="table-wrap" style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 6px rgba(0,0,0,0.05)' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 480 }}>
               <thead>
                 <tr style={{ background: '#f8fafc' }}>
                   {['Date', 'Type', 'Label', 'Description', 'Amount'].map(h => (
