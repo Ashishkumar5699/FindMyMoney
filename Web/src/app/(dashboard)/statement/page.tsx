@@ -8,8 +8,46 @@ interface Income { id: string; amount: number; source: string; description: stri
 interface Emi { id: string; loanName: string; bankName: string; emiAmount: number; nextDueDate: string; status: string; }
 
 type Row = { type: 'income' | 'expense'; label: string; sub: string; amount: number; date: string; };
+type SortCol = 'date' | 'type' | 'label' | 'description' | 'amount';
+type SortDir = 'asc' | 'desc';
 
 const now = new Date();
+
+const COLUMNS: { key: SortCol; label: string }[] = [
+  { key: 'date', label: 'Date' },
+  { key: 'type', label: 'Type' },
+  { key: 'label', label: 'Label' },
+  { key: 'description', label: 'Description' },
+  { key: 'amount', label: 'Amount' },
+];
+
+function sortRows(rows: Row[], col: SortCol, dir: SortDir): Row[] {
+  return [...rows].sort((a, b) => {
+    let cmp = 0;
+    switch (col) {
+      case 'date':   cmp = new Date(a.date).getTime() - new Date(b.date).getTime(); break;
+      case 'type':   cmp = a.type.localeCompare(b.type); break;
+      case 'label':  cmp = a.label.localeCompare(b.label); break;
+      case 'description': cmp = (a.sub || '').localeCompare(b.sub || ''); break;
+      case 'amount': cmp = a.amount - b.amount; break;
+    }
+    return dir === 'asc' ? cmp : -cmp;
+  });
+}
+
+function SortIcon({ col, sortCol, sortDir }: { col: SortCol; sortCol: SortCol; sortDir: SortDir }) {
+  const active = col === sortCol;
+  return (
+    <span style={{ display: 'inline-flex', flexDirection: 'column', marginLeft: 6, gap: 1, verticalAlign: 'middle', lineHeight: 1 }}>
+      <svg width="8" height="5" viewBox="0 0 8 5" style={{ opacity: active && sortDir === 'asc' ? 1 : 0.25 }}>
+        <path d="M4 0L8 5H0L4 0Z" fill="currentColor" />
+      </svg>
+      <svg width="8" height="5" viewBox="0 0 8 5" style={{ opacity: active && sortDir === 'desc' ? 1 : 0.25 }}>
+        <path d="M4 5L0 0H8L4 5Z" fill="currentColor" />
+      </svg>
+    </span>
+  );
+}
 
 export default function StatementPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -18,6 +56,8 @@ export default function StatementPage() {
   const [loading, setLoading] = useState(true);
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
+  const [sortCol, setSortCol] = useState<SortCol>('date');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
 
   async function load() {
     setLoading(true);
@@ -35,10 +75,21 @@ export default function StatementPage() {
 
   useEffect(() => { load(); }, [year, month]);
 
-  const rows: Row[] = [
+  function handleSort(col: SortCol) {
+    if (sortCol === col) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortCol(col);
+      setSortDir('asc');
+    }
+  }
+
+  const baseRows: Row[] = [
     ...incomes.map(i => ({ type: 'income' as const, label: i.source, sub: i.description, amount: i.amount, date: i.date })),
     ...expenses.map(e => ({ type: 'expense' as const, label: e.category, sub: e.description || e.subCategory, amount: e.amount, date: e.date })),
-  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  ];
+
+  const rows = sortRows(baseRows, sortCol, sortDir);
 
   const totalIncome = incomes.reduce((s, i) => s + i.amount, 0);
   const totalExpense = expenses.reduce((s, e) => s + e.amount, 0);
@@ -74,8 +125,25 @@ export default function StatementPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 480 }}>
               <thead>
                 <tr style={{ background: '#f8fafc' }}>
-                  {['Date', 'Type', 'Label', 'Description', 'Amount'].map(h => (
-                    <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: '#64748b', borderBottom: '1px solid #f1f5f9' }}>{h}</th>
+                  {COLUMNS.map(({ key, label }) => (
+                    <th
+                      key={key}
+                      onClick={() => handleSort(key)}
+                      style={{
+                        padding: '12px 16px',
+                        textAlign: key === 'amount' ? 'right' : 'left',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: sortCol === key ? '#334155' : '#64748b',
+                        borderBottom: '1px solid #f1f5f9',
+                        cursor: 'pointer',
+                        userSelect: 'none',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {label}
+                      <SortIcon col={key} sortCol={sortCol} sortDir={sortDir} />
+                    </th>
                   ))}
                 </tr>
               </thead>
