@@ -6,8 +6,9 @@ import { api } from '@/lib/api';
 interface Expense { id: string; amount: number; category: string; subCategory: string; description: string; date: string; }
 interface Income { id: string; amount: number; source: string; description: string; date: string; }
 interface Emi { id: string; loanName: string; bankName: string; emiAmount: number; nextDueDate: string; status: string; }
+interface Investment { id: string; name: string; principalAmount: number; expectedReturnAmount: number; actualReturnAmount?: number; startDate: string; closedAt?: string; status: string; }
 
-type Row = { type: 'income' | 'expense'; label: string; sub: string; amount: number; date: string; };
+type Row = { type: 'income' | 'expense' | 'investment'; label: string; sub: string; amount: number; date: string; isInflow: boolean; };
 type SortCol = 'date' | 'type' | 'label' | 'description' | 'amount';
 type SortDir = 'asc' | 'desc';
 
@@ -53,6 +54,7 @@ export default function StatementPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [incomes, setIncomes] = useState<Income[]>([]);
   const [emis, setEmis] = useState<Emi[]>([]);
+  const [investments, setInvestments] = useState<Investment[]>([]);
   const [loading, setLoading] = useState(true);
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -62,14 +64,16 @@ export default function StatementPage() {
   async function load() {
     setLoading(true);
     try {
-      const [e, i, em] = await Promise.all([
+      const [e, i, em, inv] = await Promise.all([
         api.get<Expense[]>(`/api/expenses?year=${year}&month=${month}`),
         api.get<Income[]>(`/api/incomes?year=${year}&month=${month}`),
         api.get<Emi[]>('/api/emis?status=Active'),
+        api.get<Investment[]>('/api/investments'),
       ]);
       setExpenses(e ?? []);
       setIncomes(i ?? []);
       setEmis(em ?? []);
+      setInvestments(inv ?? []);
     } catch { } finally { setLoading(false); }
   }
 
@@ -84,9 +88,26 @@ export default function StatementPage() {
     }
   }
 
+  // Investment rows: funded this month = outflow; closed this month = inflow
+  const invRows: Row[] = investments.flatMap(inv => {
+    const rows: Row[] = [];
+    const start = new Date(inv.startDate);
+    if (start.getFullYear() === year && start.getMonth() + 1 === month) {
+      rows.push({ type: 'investment', label: inv.name, sub: 'Investment funded', amount: inv.principalAmount, date: inv.startDate, isInflow: false });
+    }
+    if (inv.closedAt) {
+      const closed = new Date(inv.closedAt);
+      if (closed.getFullYear() === year && closed.getMonth() + 1 === month) {
+        rows.push({ type: 'investment', label: inv.name, sub: 'Investment returned', amount: inv.actualReturnAmount ?? inv.expectedReturnAmount, date: inv.closedAt, isInflow: true });
+      }
+    }
+    return rows;
+  });
+
   const baseRows: Row[] = [
-    ...incomes.map(i => ({ type: 'income' as const, label: i.source, sub: i.description, amount: i.amount, date: i.date })),
-    ...expenses.map(e => ({ type: 'expense' as const, label: e.category, sub: e.description || e.subCategory, amount: e.amount, date: e.date })),
+    ...incomes.map(i => ({ type: 'income' as const, label: i.source, sub: i.description, amount: i.amount, date: i.date, isInflow: true })),
+    ...expenses.map(e => ({ type: 'expense' as const, label: e.category, sub: e.description || e.subCategory, amount: e.amount, date: e.date, isInflow: false })),
+    ...invRows,
   ];
 
   const rows = sortRows(baseRows, sortCol, sortDir);
@@ -94,8 +115,17 @@ export default function StatementPage() {
   const totalIncome = incomes.reduce((s, i) => s + i.amount, 0);
   const totalExpense = expenses.reduce((s, e) => s + e.amount, 0);
   const totalEmi = emis.reduce((s, e) => s + e.emiAmount, 0);
+  const totalInvActive = investments.filter(i => i.status === 'Active').reduce((s, i) => s + i.principalAmount, 0);
   const net = totalIncome - totalExpense - totalEmi;
   const fmt = (n: number) => `₹${n.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+
+  const typeBadge = (r: Row) => {
+    if (r.type === 'income') return { bg: '#dcfce7', color: '#166534', label: 'income' };
+    if (r.type === 'expense') return { bg: '#fee2e2', color: '#991b1b', label: 'expense' };
+    return r.isInflow
+      ? { bg: '#ede9fe', color: '#5b21b6', label: 'invest ↩' }
+      : { bg: '#f0fdf4', color: '#166534', label: 'invest ↗' };
+  };
 
   return (
     <div>
@@ -118,6 +148,7 @@ export default function StatementPage() {
             <Card label="Income" value={fmt(totalIncome)} color="#10b981" />
             <Card label="Expenses" value={fmt(totalExpense)} color="#ef4444" />
             <Card label="EMIs (active)" value={fmt(totalEmi)} color="#f59e0b" />
+            <Card label="Investments (active)" value={fmt(totalInvActive)} color="#8b5cf6" />
             <Card label="Net" value={fmt(net)} color={net >= 0 ? '#3b82f6' : '#ef4444'} />
           </div>
 
@@ -150,21 +181,25 @@ export default function StatementPage() {
               <tbody>
                 {rows.length === 0
                   ? <tr><td colSpan={5} style={{ padding: 32, textAlign: 'center', color: '#94a3b8' }}>No transactions</td></tr>
-                  : rows.map((r, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid #f8fafc' }}>
-                      <td style={{ padding: '10px 16px', fontSize: 13 }}>{new Date(r.date).toLocaleDateString()}</td>
-                      <td style={{ padding: '10px 16px' }}>
-                        <span style={{ padding: '2px 8px', borderRadius: 10, fontSize: 11, fontWeight: 600, background: r.type === 'income' ? '#dcfce7' : '#fee2e2', color: r.type === 'income' ? '#166534' : '#991b1b' }}>
-                          {r.type}
-                        </span>
-                      </td>
-                      <td style={{ padding: '10px 16px', fontSize: 13, fontWeight: 500 }}>{r.label}</td>
-                      <td style={{ padding: '10px 16px', fontSize: 13, color: '#64748b' }}>{r.sub || '—'}</td>
-                      <td style={{ padding: '10px 16px', fontSize: 14, fontWeight: 700, color: r.type === 'income' ? '#10b981' : '#ef4444', textAlign: 'right' }}>
-                        {r.type === 'income' ? '+' : '-'}{fmt(r.amount)}
-                      </td>
-                    </tr>
-                  ))}
+                  : rows.map((r, i) => {
+                    const badge = typeBadge(r);
+                    const amtColor = r.isInflow ? '#10b981' : (r.type === 'investment' ? '#8b5cf6' : '#ef4444');
+                    return (
+                      <tr key={i} style={{ borderBottom: '1px solid #f8fafc' }}>
+                        <td style={{ padding: '10px 16px', fontSize: 13 }}>{new Date(r.date).toLocaleDateString()}</td>
+                        <td style={{ padding: '10px 16px' }}>
+                          <span style={{ padding: '2px 8px', borderRadius: 10, fontSize: 11, fontWeight: 600, background: badge.bg, color: badge.color }}>
+                            {badge.label}
+                          </span>
+                        </td>
+                        <td style={{ padding: '10px 16px', fontSize: 13, fontWeight: 500 }}>{r.label}</td>
+                        <td style={{ padding: '10px 16px', fontSize: 13, color: '#64748b' }}>{r.sub || '—'}</td>
+                        <td style={{ padding: '10px 16px', fontSize: 14, fontWeight: 700, color: amtColor, textAlign: 'right' }}>
+                          {r.isInflow ? '+' : '-'}{fmt(r.amount)}
+                        </td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </div>
