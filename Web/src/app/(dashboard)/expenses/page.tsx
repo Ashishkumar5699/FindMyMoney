@@ -137,32 +137,26 @@ function ExpenseForm({ initial, onClose, onSaved }: { initial: Expense | null; o
   const [description, setDescription] = useState(initial?.description ?? '');
   const [date, setDate] = useState(initial ? initial.date.slice(0, 10) : new Date().toISOString().slice(0, 10));
   const [paymentSourceId, setPaymentSourceId] = useState(initial?.paymentSourceId ?? '');
-  const [parentCategory, setParentCategory] = useState('');
-  const [subCategory, setSubCategory] = useState('');
+  // Initialise directly from initial so the select isn't blank while the API loads
+  const initParts = initial?.category ? initial.category.split(' / ') : ['', ''];
+  const [parentCategory, setParentCategory] = useState(initParts[0]);
+  const [subCategory, setSubCategory] = useState(initParts[1] ?? '');
   const [loading, setLoading] = useState(false);
 
   const [sources, setSources] = useState<PaymentSource[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loadingMeta, setLoadingMeta] = useState(true);
+  const [metaLoaded, setMetaLoaded] = useState(false);
 
   useEffect(() => {
     Promise.all([
-      api.get<PaymentSource[]>('/api/payment-sources').catch(() => []),
-      api.get<Category[]>('/api/categories?type=1').catch(() => []),
+      api.get<PaymentSource[]>('/api/payment-sources').catch(() => [] as PaymentSource[]),
+      api.get<Category[]>('/api/categories?type=1').catch(() => [] as Category[]),
     ]).then(([srcs, cats]) => {
       setSources((srcs ?? []).filter(s => s.isActive));
       setCategories(cats ?? []);
-
-      // Pre-select category when editing
-      if (initial?.category) {
-        const parts = initial.category.split(' / ');
-        setParentCategory(parts[0]);
-        setSubCategory(parts[1] ?? '');
-      }
-    }).finally(() => setLoadingMeta(false));
+    }).finally(() => setMetaLoaded(true));
   }, []);
 
-  // When parent changes, reset sub
   function handleParentChange(val: string) {
     setParentCategory(val);
     setSubCategory('');
@@ -171,9 +165,11 @@ function ExpenseForm({ initial, onClose, onSaved }: { initial: Expense | null; o
   const selectedSource = sources.find(s => s.id === paymentSourceId);
   const isCc = selectedSource?.type === 'CreditCard';
 
-  const parentOptions: string[] = categories.length > 0
-    ? categories.map(c => c.name)
-    : FALLBACK_CATEGORIES;
+  // Build parent options: API categories, or fallback list, always including the current value so edit never shows blank
+  const baseOptions: string[] = categories.length > 0 ? categories.map(c => c.name) : FALLBACK_CATEGORIES;
+  const parentOptions: string[] = parentCategory && !baseOptions.includes(parentCategory)
+    ? [parentCategory, ...baseOptions]
+    : baseOptions;
 
   const selectedParentCat = categories.find(c => c.name === parentCategory);
   const subOptions: string[] = selectedParentCat?.subCategories?.map(s => s.name) ?? [];
@@ -207,7 +203,7 @@ function ExpenseForm({ initial, onClose, onSaved }: { initial: Expense | null; o
         </Field>
 
         <Field label="Payment Source">
-          {loadingMeta ? (
+          {!metaLoaded ? (
             <div style={{ ...fieldInput, color: '#94a3b8', display: 'flex', alignItems: 'center' }}>Loading…</div>
           ) : (
             <select style={fieldInput} value={paymentSourceId} onChange={e => setPaymentSourceId(e.target.value)}>
@@ -229,16 +225,12 @@ function ExpenseForm({ initial, onClose, onSaved }: { initial: Expense | null; o
         </Field>
 
         <Field label="Category">
-          {loadingMeta ? (
-            <div style={{ ...fieldInput, color: '#94a3b8', display: 'flex', alignItems: 'center' }}>Loading…</div>
-          ) : (
-            <select style={fieldInput} value={parentCategory} onChange={e => handleParentChange(e.target.value)} required>
-              <option value="">— Select category —</option>
-              {parentOptions.map(name => (
-                <option key={name} value={name}>{name}</option>
-              ))}
-            </select>
-          )}
+          <select style={fieldInput} value={parentCategory} onChange={e => handleParentChange(e.target.value)} required>
+            <option value="">— Select category —</option>
+            {parentOptions.map(name => (
+              <option key={name} value={name}>{name}</option>
+            ))}
+          </select>
         </Field>
 
         {subOptions.length > 0 && (
