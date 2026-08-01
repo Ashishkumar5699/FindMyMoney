@@ -10,3 +10,13 @@ export async function GET(req: NextRequest) {
   const upstream = await dotnetFetch(`/api/findmymoney/paymentsources/${claims.nameid}`, { method: 'GET' }, extractBearer(req));
   return NextResponse.json(await upstream.json(), { status: upstream.status });
 }
+
+export async function POST(req: NextRequest) {
+  let claims;
+  try { claims = await verifyToken(req); } catch {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+  }
+  const body = await req.text();
+  const upstream = await dotnetFetch(`/api/findmymoney/paymentsources/${claims.nameid}`, { method: 'POST', body }, extractBearer(req));
+  return NextResponse.json(await upstream.json(), { status: upstream.status });
+}
