@@ -5,18 +5,26 @@ import { api } from '@/lib/api';
 
 interface Expense {
   id: string; amount: number; category: string;
-  subCategory: string; description: string; date: string;
-  isVirtual?: boolean;
+  description: string; date: string;
+  paymentSourceId?: string; paymentSourceName?: string;
+}
+
+interface PaymentSource {
+  id: string; name: string; type: string;
+  billingCycleDay?: number; dueDaysAfterBilling?: number;
+  accountLast4?: string; bankName?: string; isActive: boolean;
+}
+
+interface Category {
+  id: string; name: string; type: string; parentId?: string;
+  subCategories: Category[];
 }
 
 interface DateGroup {
-  dateKey: string;
-  displayDate: string;
-  items: Expense[];
-  dayTotal: number;
+  dateKey: string; displayDate: string; items: Expense[]; dayTotal: number;
 }
 
-const CATEGORIES = ['Food', 'Transport', 'Shopping', 'Health', 'Entertainment', 'Utilities', 'Education', 'Other'];
+const FALLBACK_CATEGORIES = ['Food', 'Transport', 'Shopping', 'Health', 'Entertainment', 'Utilities', 'Education', 'Other'];
 
 const now = new Date();
 
@@ -91,40 +99,19 @@ export default function ExpensesPage() {
             </div>
           ) : groups.map(group => (
             <div key={group.dateKey} style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 6px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
-              {/* Date group header */}
-              <div style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '10px 20px', background: '#f8fafc',
-                borderBottom: '1px solid #f1f5f9',
-              }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 20px', background: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
                 <span style={{ fontWeight: 700, fontSize: 13, color: '#334155' }}>{group.displayDate}</span>
                 <span style={{ fontWeight: 600, fontSize: 13, color: '#ef4444' }}>-{fmt(group.dayTotal)}</span>
               </div>
-
-              {/* Rows for this date */}
               {group.items.map((e, i) => (
-                <div key={e.id} style={{
-                  display: 'flex', alignItems: 'center', padding: '14px 20px',
-                  borderBottom: i < group.items.length - 1 ? '1px solid #f1f5f9' : 'none',
-                }}>
+                <div key={e.id} style={{ display: 'flex', alignItems: 'center', padding: '14px 20px', borderBottom: i < group.items.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
                   <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontWeight: 600, fontSize: 14 }}>
-                        {e.category}{e.subCategory ? ` / ${e.subCategory}` : ''}
-                      </span>
-                      {e.isVirtual && (
-                        <span style={{ padding: '2px 7px', borderRadius: 8, fontSize: 11, fontWeight: 600, background: '#fef3c7', color: '#92400e' }}>
-                          CC virtual
-                        </span>
-                      )}
-                    </div>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>{e.category}</div>
                     <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>
-                      {e.description || '—'}
+                      {[e.description, e.paymentSourceName].filter(Boolean).join(' · ') || '—'}
                     </div>
                   </div>
-                  <div style={{ fontWeight: 700, color: e.isVirtual ? '#d97706' : '#ef4444', fontSize: 16, marginRight: 16 }}>
-                    {fmt(e.amount)}
-                  </div>
+                  <div style={{ fontWeight: 700, color: '#ef4444', fontSize: 16, marginRight: 16 }}>{fmt(e.amount)}</div>
                   <button onClick={() => { setEditing(e); setShowForm(true); }} style={iconBtn('#3b82f6')}>✏️</button>
                   <button onClick={() => handleDelete(e.id)} style={iconBtn('#ef4444')}>🗑️</button>
                 </div>
@@ -147,17 +134,63 @@ export default function ExpensesPage() {
 
 function ExpenseForm({ initial, onClose, onSaved }: { initial: Expense | null; onClose: () => void; onSaved: () => void }) {
   const [amount, setAmount] = useState(initial?.amount.toString() ?? '');
-  const [category, setCategory] = useState(initial?.category ?? CATEGORIES[0]);
-  const [subCategory, setSubCategory] = useState(initial?.subCategory ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
   const [date, setDate] = useState(initial ? initial.date.slice(0, 10) : new Date().toISOString().slice(0, 10));
+  const [paymentSourceId, setPaymentSourceId] = useState(initial?.paymentSourceId ?? '');
+  const [parentCategory, setParentCategory] = useState('');
+  const [subCategory, setSubCategory] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const [sources, setSources] = useState<PaymentSource[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loadingMeta, setLoadingMeta] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      api.get<PaymentSource[]>('/api/payment-sources').catch(() => []),
+      api.get<Category[]>('/api/categories?type=1').catch(() => []),
+    ]).then(([srcs, cats]) => {
+      setSources((srcs ?? []).filter(s => s.isActive));
+      setCategories(cats ?? []);
+
+      // Pre-select category when editing
+      if (initial?.category) {
+        const parts = initial.category.split(' / ');
+        setParentCategory(parts[0]);
+        setSubCategory(parts[1] ?? '');
+      }
+    }).finally(() => setLoadingMeta(false));
+  }, []);
+
+  // When parent changes, reset sub
+  function handleParentChange(val: string) {
+    setParentCategory(val);
+    setSubCategory('');
+  }
+
+  const selectedSource = sources.find(s => s.id === paymentSourceId);
+  const isCc = selectedSource?.type === 'CreditCard';
+
+  const parentOptions: string[] = categories.length > 0
+    ? categories.map(c => c.name)
+    : FALLBACK_CATEGORIES;
+
+  const selectedParentCat = categories.find(c => c.name === parentCategory);
+  const subOptions: string[] = selectedParentCat?.subCategories?.map(s => s.name) ?? [];
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setLoading(true);
     try {
-      const payload = { amount: parseFloat(amount), category, subCategory, description, date: new Date(date).toISOString() };
+      const categoryValue = subCategory ? `${parentCategory} / ${subCategory}` : parentCategory;
+      const payload: Record<string, unknown> = {
+        amount: parseFloat(amount),
+        category: categoryValue || 'Other',
+        description,
+        date: new Date(date).toISOString(),
+      };
+      if (paymentSourceId) payload.paymentSourceId = paymentSourceId;
+
       if (initial) await api.put(`/api/expenses/${initial.id}`, payload);
       else await api.post('/api/expenses', payload);
       onSaved();
@@ -169,23 +202,64 @@ function ExpenseForm({ initial, onClose, onSaved }: { initial: Expense | null; o
   return (
     <Modal title={initial ? 'Edit Expense' : 'Add Expense'} onClose={onClose}>
       <form onSubmit={handleSubmit}>
-        <Field label="Amount">
+        <Field label="Amount (₹)">
           <input style={fieldInput} type="number" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} required />
         </Field>
+
+        <Field label="Payment Source">
+          {loadingMeta ? (
+            <div style={{ ...fieldInput, color: '#94a3b8', display: 'flex', alignItems: 'center' }}>Loading…</div>
+          ) : (
+            <select style={fieldInput} value={paymentSourceId} onChange={e => setPaymentSourceId(e.target.value)}>
+              <option value="">— None / Cash —</option>
+              {sources.map(s => (
+                <option key={s.id} value={s.id}>
+                  {s.name}{s.type === 'CreditCard' ? ' (CC)' : ''}{s.accountLast4 ? ` ···${s.accountLast4}` : ''}
+                </option>
+              ))}
+            </select>
+          )}
+          {isCc && selectedSource?.billingCycleDay && (
+            <div style={{ marginTop: 6, fontSize: 12, color: '#d97706', background: '#fef3c7', padding: '6px 10px', borderRadius: 6 }}>
+              CC billing closes on day <strong>{selectedSource.billingCycleDay}</strong> each month.
+              {selectedSource.dueDaysAfterBilling ? ` Due ${selectedSource.dueDaysAfterBilling} days after.` : ''}
+              {' '}Expense will appear in the bill whose window includes this date.
+            </div>
+          )}
+        </Field>
+
         <Field label="Category">
-          <select style={fieldInput} value={category} onChange={e => setCategory(e.target.value)}>
-            {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
+          {loadingMeta ? (
+            <div style={{ ...fieldInput, color: '#94a3b8', display: 'flex', alignItems: 'center' }}>Loading…</div>
+          ) : (
+            <select style={fieldInput} value={parentCategory} onChange={e => handleParentChange(e.target.value)} required>
+              <option value="">— Select category —</option>
+              {parentOptions.map(name => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </select>
+          )}
         </Field>
-        <Field label="Sub-category">
-          <input style={fieldInput} value={subCategory} onChange={e => setSubCategory(e.target.value)} placeholder="Optional" />
-        </Field>
+
+        {subOptions.length > 0 && (
+          <Field label="Sub-category">
+            <select style={fieldInput} value={subCategory} onChange={e => setSubCategory(e.target.value)}>
+              <option value="">— None —</option>
+              {subOptions.map(name => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </select>
+          </Field>
+        )}
+
         <Field label="Description">
           <input style={fieldInput} value={description} onChange={e => setDescription(e.target.value)} placeholder="Optional" />
         </Field>
+
         <Field label="Date">
           <input style={fieldInput} type="date" value={date} onChange={e => setDate(e.target.value)} required />
         </Field>
+
         <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
           <button type="button" onClick={onClose} style={{ ...submitBtn, background: '#f1f5f9', color: '#374151' }}>Cancel</button>
           <button type="submit" disabled={loading} style={submitBtn}>{loading ? 'Saving…' : 'Save'}</button>
@@ -197,8 +271,8 @@ function ExpenseForm({ initial, onClose, onSaved }: { initial: Expense | null; o
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ background: '#fff', borderRadius: 16, padding: '28px 28px', width: 420, boxShadow: '0 8px 40px rgba(0,0,0,0.15)' }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}>
+      <div style={{ background: '#fff', borderRadius: 16, padding: '28px', width: '100%', maxWidth: 440, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 8px 40px rgba(0,0,0,0.15)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>{title}</h2>
           <button onClick={onClose} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 20, color: '#94a3b8' }}>×</button>
