@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, FormEvent } from 'react';
+import { useEffect, useState, useRef, FormEvent } from 'react';
 import { api } from '@/lib/api';
 
 interface CcBill {
@@ -149,18 +149,29 @@ function Section({ title, bills, onMarkPaid }: { title: string; bills: CcBill[];
 }
 
 function GenerateForm({ sources, onClose, onGenerated }: { sources: PaymentSource[]; onClose: () => void; onGenerated: () => void }) {
-  const [sourceId, setSourceId] = useState(sources[0]?.id ?? '');
-  const [year, setYear]   = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth() + 1);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [sourceId, setSourceId] = useState('');
+  const [year, setYear]         = useState(now.getFullYear());
+  const [month, setMonth]       = useState(now.getMonth() + 1);
+  const [amount, setAmount]     = useState('');
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState('');
+  const didInit = useRef(false);
+
+  // Auto-select first CC source (handles case where sources load after modal opens)
+  useEffect(() => {
+    if (!didInit.current && sources.length > 0) {
+      setSourceId(sources[0].id);
+      didInit.current = true;
+    }
+  }, [sources]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!sourceId) { setError('Select a credit card'); return; }
+    if (!amount || +amount <= 0) { setError('Enter the exact bill amount from your bank'); return; }
     setLoading(true); setError('');
     try {
-      await api.post('/api/cc-bills', { paymentSourceId: sourceId, year, month });
+      await api.post('/api/cc-bills', { paymentSourceId: sourceId, year, month, overrideAmount: +amount });
       onGenerated();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to generate bill');
@@ -180,7 +191,7 @@ function GenerateForm({ sources, onClose, onGenerated }: { sources: PaymentSourc
           <form onSubmit={handleSubmit}>
             <div style={{ marginBottom: 14 }}>
               <label style={labelStyle}>Credit Card</label>
-              <select style={fieldInput} value={sourceId} onChange={e => setSourceId(e.target.value)} required>
+              <select style={fieldInput} value={sourceId} onChange={e => setSourceId(e.target.value)}>
                 {sources.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
@@ -195,9 +206,21 @@ function GenerateForm({ sources, onClose, onGenerated }: { sources: PaymentSourc
                 </select>
               </div>
             </div>
-            <p style={{ fontSize: 12, color: '#64748b', marginBottom: 16, background: '#f8fafc', padding: '8px 12px', borderRadius: 8 }}>
-              This will sum all CC expenses within the card&apos;s billing window for the selected month.
-            </p>
+            <div style={{ marginBottom: 14 }}>
+              <label style={labelStyle}>Bill Amount (₹)</label>
+              <input
+                style={fieldInput}
+                type="number"
+                min="0.01"
+                step="0.01"
+                placeholder="Enter exact amount from bank statement"
+                value={amount}
+                onChange={e => setAmount(e.target.value)}
+              />
+              <p style={{ fontSize: 11, color: '#94a3b8', margin: '4px 0 0' }}>
+                Enter the total amount shown on your bank / CC statement
+              </p>
+            </div>
             {error && <p style={{ color: '#ef4444', fontSize: 13, marginBottom: 12 }}>{error}</p>}
             <div style={{ display: 'flex', gap: 8 }}>
               <button type="button" onClick={onClose} style={{ ...submitBtn, background: '#f1f5f9', color: '#374151' }}>Cancel</button>
