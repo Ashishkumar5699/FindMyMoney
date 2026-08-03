@@ -50,8 +50,16 @@ export default function PaymentSourcesPage() {
     load();
   }
 
-  const active = items.filter(s => s.isActive);
+  const active   = items.filter(s => s.isActive);
   const inactive = items.filter(s => !s.isActive);
+
+  // Group active sources by type in display order
+  const TYPE_ORDER = ['Bank', 'CreditCard', 'UPI', 'Cash', 'Wallet'];
+  const grouped = TYPE_ORDER
+    .map(t => ({ type: t, sources: active.filter(s => s.type === t) }))
+    .filter(g => g.sources.length > 0);
+
+  const onEdit   = (s: PaymentSource) => { setEditing(s); setShowForm(true); };
 
   return (
     <div>
@@ -62,24 +70,28 @@ export default function PaymentSourcesPage() {
 
       {loading ? <p style={{ color: '#94a3b8' }}>Loading…</p> : (
         <>
-          <SourceList
-            items={active}
-            onEdit={s => { setEditing(s); setShowForm(true); }}
-            onDelete={handleDelete}
-          />
-          {inactive.length > 0 && (
-            <>
-              <p style={{ margin: '24px 0 12px', fontSize: 13, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1 }}>Inactive</p>
-              <SourceList
-                items={inactive}
-                onEdit={s => { setEditing(s); setShowForm(true); }}
-                onDelete={handleDelete}
-              />
-            </>
-          )}
           {items.length === 0 && (
             <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 6px rgba(0,0,0,0.05)', padding: 40, textAlign: 'center', color: '#94a3b8' }}>
               No payment sources yet. Add your bank accounts and credit cards to track where money goes.
+            </div>
+          )}
+
+          {grouped.map(({ type, sources }) => {
+            const typeLabel = TYPES.find(t => t.value === typeVal(type))?.label ?? type;
+            return (
+              <div key={type} style={{ marginBottom: 24 }}>
+                <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1 }}>
+                  {typeLabel}
+                </p>
+                <SourceList items={sources} onEdit={onEdit} onDelete={handleDelete} />
+              </div>
+            );
+          })}
+
+          {inactive.length > 0 && (
+            <div style={{ marginBottom: 24 }}>
+              <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1 }}>Inactive</p>
+              <SourceList items={inactive} onEdit={onEdit} onDelete={handleDelete} />
             </div>
           )}
         </>
