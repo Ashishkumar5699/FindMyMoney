@@ -167,7 +167,11 @@ function CategoryForm({
       if (initial) {
         await api.put(`/api/categories/${initial.id}`, payload);
       } else {
-        await api.post('/api/categories', payload);
+        const created = await api.post<{ id: string }>('/api/categories', payload);
+        // Auto-create "Other" sub-category for new top-level categories
+        if (!parentId && created?.id) {
+          await api.post('/api/categories', { name: 'Other', type, parentId: created.id });
+        }
       }
       onSaved();
     } catch (err: unknown) {
