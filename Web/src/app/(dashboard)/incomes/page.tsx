@@ -5,6 +5,24 @@ import { api } from '@/lib/api';
 
 interface Income { id: string; amount: number; source: string; description: string; date: string; }
 
+interface DateGroup { dateKey: string; displayDate: string; items: Income[]; dayTotal: number; }
+
+function groupByDate(items: Income[]): DateGroup[] {
+  const sorted = [...items].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const map = new Map<string, Income[]>();
+  for (const e of sorted) {
+    const key = e.date.slice(0, 10);
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(e);
+  }
+  return [...map.entries()].map(([key, rows]) => ({
+    dateKey: key,
+    displayDate: new Date(key + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+    items: rows,
+    dayTotal: rows.reduce((s, e) => s + e.amount, 0),
+  }));
+}
+
 const now = new Date();
 
 export default function IncomesPage() {
@@ -33,6 +51,7 @@ export default function IncomesPage() {
 
   const total = items.reduce((s, i) => s + i.amount, 0);
   const fmt = (n: number) => `₹${n.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+  const groups = groupByDate(items);
 
   return (
     <div>
@@ -54,21 +73,30 @@ export default function IncomesPage() {
       </div>
 
       {loading ? <p style={{ color: '#94a3b8' }}>Loading…</p> : (
-        <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 6px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
-          {items.length === 0
-            ? <p style={{ padding: 24, color: '#94a3b8', textAlign: 'center' }}>No incomes for this period</p>
-            : items.map((e, i) => (
-              <div key={e.id} style={{ display: 'flex', alignItems: 'center', padding: '14px 20px', borderBottom: i < items.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, fontSize: 14 }}>{e.source}</div>
-                  <div style={{ fontSize: 12, color: '#94a3b8' }}>{e.description || '—'} · {new Date(e.date).toLocaleDateString()}</div>
-                </div>
-                <div style={{ fontWeight: 700, color: '#10b981', fontSize: 16, marginRight: 16 }}>{fmt(e.amount)}</div>
-                <button onClick={() => { setEditing(e); setShowForm(true); }} style={iconBtn('#3b82f6')}>✏️</button>
-                <button onClick={() => handleDelete(e.id)} style={iconBtn('#ef4444')}>🗑️</button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {groups.length === 0 ? (
+            <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 6px rgba(0,0,0,0.05)', padding: 24, textAlign: 'center', color: '#94a3b8' }}>
+              No incomes for this period
+            </div>
+          ) : groups.map(group => (
+            <div key={group.dateKey} style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 6px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 20px', background: '#f0fdf4', borderBottom: '1px solid #f1f5f9' }}>
+                <span style={{ fontWeight: 700, fontSize: 13, color: '#334155' }}>{group.displayDate}</span>
+                <span style={{ fontWeight: 600, fontSize: 13, color: '#10b981' }}>+{fmt(group.dayTotal)}</span>
               </div>
-            ))
-          }
+              {group.items.map((e, i) => (
+                <div key={e.id} style={{ display: 'flex', alignItems: 'center', padding: '14px 20px', borderBottom: i < group.items.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>{e.source}</div>
+                    <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>{e.description || '—'}</div>
+                  </div>
+                  <div style={{ fontWeight: 700, color: '#10b981', fontSize: 16, marginRight: 16 }}>{fmt(e.amount)}</div>
+                  <button onClick={() => { setEditing(e); setShowForm(true); }} style={iconBtn('#3b82f6')}>✏️</button>
+                  <button onClick={() => handleDelete(e.id)} style={iconBtn('#ef4444')}>🗑️</button>
+                </div>
+              ))}
+            </div>
+          ))}
         </div>
       )}
 
