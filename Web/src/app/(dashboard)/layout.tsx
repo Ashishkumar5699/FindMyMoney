@@ -11,6 +11,7 @@ const NAV = [
   { href: '/emis',             label: 'EMIs',            icon: '🏦' },
   { href: '/investments',      label: 'Investments',     icon: '📈' },
   { href: '/cc-bills',         label: 'CC Bills',        icon: '🧾' },
+  { href: '/categories',       label: 'Categories',      icon: '🏷️' },
   { href: '/payment-sources',  label: 'Payment Sources', icon: '💳' },
   { href: '/statement',        label: 'Statement',       icon: '📄' },
 ];
