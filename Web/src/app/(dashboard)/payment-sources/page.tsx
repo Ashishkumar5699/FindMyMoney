@@ -7,7 +7,7 @@ interface PaymentSource {
   id: string; name: string; type: string;
   accountLast4?: string; bankName?: string;
   creditLimit?: number; billingCycleDay?: number;
-  dueDaysAfterBilling?: number; isActive: boolean;
+  dueDaysAfterBilling?: number; balance: number; isActive: boolean;
 }
 
 const TYPES = [
@@ -127,11 +127,14 @@ function SourceList({ items, onEdit, onDelete }: {
                 {s.accountLast4 && <span style={{ fontSize: 12, color: '#94a3b8' }}>···{s.accountLast4}</span>}
                 {!s.isActive && <span style={{ fontSize: 11, color: '#94a3b8', background: '#f1f5f9', padding: '2px 7px', borderRadius: 8 }}>Inactive</span>}
               </div>
-              <div style={{ marginTop: 6, fontSize: 12, color: '#64748b', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+              <div style={{ marginTop: 6, fontSize: 12, color: '#64748b', display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
                 {s.bankName && <span>🏦 {s.bankName}</span>}
                 {s.creditLimit && <span>Limit: {fmt(s.creditLimit)}</span>}
                 {s.billingCycleDay && <span>Billing closes: day <strong>{s.billingCycleDay}</strong></span>}
                 {s.dueDaysAfterBilling && <span>Due: {s.dueDaysAfterBilling} days after</span>}
+                <span style={{ fontWeight: 700, fontSize: 13, color: s.balance >= 0 ? '#10b981' : '#ef4444' }}>
+                  Balance: {s.balance >= 0 ? '' : '-'}{fmt(s.balance)}
+                </span>
               </div>
             </div>
             <button onClick={() => onEdit(s)} style={iconBtn('#3b82f6')}>✏️</button>
@@ -156,6 +159,7 @@ function SourceForm({ initial, onClose, onSaved }: { initial: PaymentSource | nu
   const [creditLimit, setCreditLimit] = useState(initial?.creditLimit?.toString() ?? '');
   const [billingCycleDay, setBillingCycleDay] = useState(initial?.billingCycleDay?.toString() ?? '');
   const [dueDays, setDueDays] = useState(initial?.dueDaysAfterBilling?.toString() ?? '');
+  const [balance, setBalance] = useState(initial?.balance?.toString() ?? '0');
   const [isActive, setIsActive] = useState(initial?.isActive ?? true);
   const [loading, setLoading] = useState(false);
 
@@ -171,6 +175,7 @@ function SourceForm({ initial, onClose, onSaved }: { initial: PaymentSource | nu
       if (isCc && creditLimit) payload.creditLimit = parseFloat(creditLimit);
       if (isCc && billingCycleDay) payload.billingCycleDay = parseInt(billingCycleDay);
       if (isCc && dueDays) payload.dueDaysAfterBilling = parseInt(dueDays);
+      payload.balance = parseFloat(balance) || 0;
       if (initial) {
         payload.isActive = isActive;
         await api.put(`/api/payment-sources/${initial.id}`, payload);
@@ -222,6 +227,13 @@ function SourceForm({ initial, onClose, onSaved }: { initial: PaymentSource | nu
             </Field>
           </>
         )}
+
+        <Field label="Current balance (₹)">
+          <input style={fieldInput} type="number" step="0.01" value={balance} onChange={e => setBalance(e.target.value)} placeholder="0.00" />
+          <p style={{ margin: '4px 0 0', fontSize: 11, color: '#94a3b8' }}>
+            {initial ? 'Adjust if balance is wrong (transfers update this automatically)' : 'Opening balance — set to current account balance'}
+          </p>
+        </Field>
 
         {initial && (
           <Field label="">
