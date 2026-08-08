@@ -50,6 +50,13 @@ export default function PaymentSourcesPage() {
     load();
   }
 
+  async function handleToggleActive(id: string, current: boolean) {
+    const action = current ? 'close' : 'reopen';
+    if (!confirm(`${current ? 'Close' : 'Reopen'} this card? You can ${action === 'close' ? 'reopen' : 'close'} it again any time.`)) return;
+    await api.patch(`/api/payment-sources/${id}/status`, { isActive: !current });
+    load();
+  }
+
   const active   = items.filter(s => s.isActive);
   const inactive = items.filter(s => !s.isActive);
 
@@ -83,15 +90,15 @@ export default function PaymentSourcesPage() {
                 <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1 }}>
                   {typeLabel}
                 </p>
-                <SourceList items={sources} onEdit={onEdit} onDelete={handleDelete} />
+                <SourceList items={sources} onEdit={onEdit} onDelete={handleDelete} onToggleActive={handleToggleActive} />
               </div>
             );
           })}
 
           {inactive.length > 0 && (
             <div style={{ marginBottom: 24 }}>
-              <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1 }}>Inactive</p>
-              <SourceList items={inactive} onEdit={onEdit} onDelete={handleDelete} />
+              <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1 }}>Closed Cards</p>
+              <SourceList items={inactive} onEdit={onEdit} onDelete={handleDelete} onToggleActive={handleToggleActive} />
             </div>
           )}
         </>
@@ -108,10 +115,11 @@ export default function PaymentSourcesPage() {
   );
 }
 
-function SourceList({ items, onEdit, onDelete }: {
+function SourceList({ items, onEdit, onDelete, onToggleActive }: {
   items: PaymentSource[];
   onEdit: (s: PaymentSource) => void;
   onDelete: (id: string, name: string) => void;
+  onToggleActive: (id: string, current: boolean) => void;
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -119,13 +127,13 @@ function SourceList({ items, onEdit, onDelete }: {
         const badge = TYPE_BADGE[s.type] ?? { bg: '#f1f5f9', color: '#334155' };
         const typeLabel = TYPES.find(t => t.value === typeVal(s.type))?.label ?? s.type;
         return (
-          <div key={s.id} style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 6px rgba(0,0,0,0.05)', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div key={s.id} style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 6px rgba(0,0,0,0.05)', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16, opacity: s.isActive ? 1 : 0.65 }}>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                 <span style={{ fontWeight: 700, fontSize: 15 }}>{s.name}</span>
                 <span style={{ padding: '2px 9px', borderRadius: 10, fontSize: 11, fontWeight: 700, background: badge.bg, color: badge.color }}>{typeLabel}</span>
                 {s.accountLast4 && <span style={{ fontSize: 12, color: '#94a3b8' }}>···{s.accountLast4}</span>}
-                {!s.isActive && <span style={{ fontSize: 11, color: '#94a3b8', background: '#f1f5f9', padding: '2px 7px', borderRadius: 8 }}>Inactive</span>}
+                {!s.isActive && <span style={{ fontSize: 11, color: '#94a3b8', background: '#f1f5f9', padding: '2px 7px', borderRadius: 8 }}>Closed</span>}
               </div>
               <div style={{ marginTop: 6, fontSize: 12, color: '#64748b', display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
                 {s.bankName && <span>🏦 {s.bankName}</span>}
@@ -137,6 +145,13 @@ function SourceList({ items, onEdit, onDelete }: {
                 </span>
               </div>
             </div>
+            <button
+              onClick={() => onToggleActive(s.id, s.isActive)}
+              title={s.isActive ? 'Close this card' : 'Reopen this card'}
+              style={{ ...iconBtn(s.isActive ? '#f59e0b' : '#10b981'), fontSize: 14, padding: '4px 8px', border: `1px solid ${s.isActive ? '#fde68a' : '#a7f3d0'}`, borderRadius: 6, background: s.isActive ? '#fefce8' : '#f0fdf4' }}
+            >
+              {s.isActive ? '🔒 Close' : '🔓 Reopen'}
+            </button>
             <button onClick={() => onEdit(s)} style={iconBtn('#3b82f6')}>✏️</button>
             <button onClick={() => onDelete(s.id, s.name)} style={iconBtn('#ef4444')}>🗑️</button>
           </div>

@@ -43,3 +43,10 @@ build/
 
 # Test coverage
 coverage/
+
+# ── Web (Next.js) ─────────────────────────────────────────────────────────────
+Web/.next/
+Web/node_modules/
+Web/.vercel/
+Web/tsconfig.tsbuildinfo
+Flutter/android/findmymoney_android.iml
