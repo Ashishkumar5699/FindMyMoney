@@ -12,6 +12,7 @@ const NAV = [
   { href: '/investments',      label: 'Investments',     icon: '📈' },
   { href: '/cc-bills',         label: 'CC Bills',        icon: '🧾' },
   { href: '/transfers',        label: 'Transfers',       icon: '🔄' },
+  { href: '/loans',            label: 'Loans',           icon: '🤝' },
   { href: '/categories',       label: 'Categories',      icon: '🏷️' },
   { href: '/payment-sources',  label: 'Payment Sources', icon: '💳' },
   { href: '/statement',        label: 'Statement',       icon: '📄' },
