@@ -10,13 +10,19 @@ interface CcBill {
   status: string; paidAt?: string;
 }
 
-interface PaymentSource { id: string; name: string; type: string; isActive: boolean; }
+interface PaymentSource { id: string; name: string; type: string; isActive: boolean; billingCycleDay?: number; dueDaysAfterBilling?: number; }
 
 const now = new Date();
 const MONTHS = Array.from({ length: 12 }, (_, i) => ({ value: i + 1, label: new Date(2000, i).toLocaleString('default', { month: 'long' }) }));
 
 const fmt     = (n: number) => `₹${n.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
-const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+const fmtDate = (d: string) => new Date(d + (d.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+// Compute days left using local midnight so timezone doesn't cause off-by-one
+function daysFromNow(dateStr: string): number {
+  const due   = new Date(dateStr.slice(0, 10) + 'T00:00:00');
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  return Math.ceil((due.getTime() - today.getTime()) / 86400000);
+}
 
 function statusBadge(status: string) {
   if (status === 'Paid') return { bg: '#dcfce7', color: '#166534', label: 'Paid' };
@@ -28,6 +34,7 @@ export default function CcBillsPage() {
   const [sources, setSources]   = useState<PaymentSource[]>([]);
   const [loading, setLoading]   = useState(true);
   const [showGen, setShowGen]   = useState(false);
+  const [editing, setEditing]   = useState<CcBill | null>(null);
   const [year, setYear]         = useState(now.getFullYear());
   const [month, setMonth]       = useState(now.getMonth() + 1);
 
@@ -52,6 +59,16 @@ export default function CcBillsPage() {
       load();
     } catch (e: unknown) {
       alert(e instanceof Error ? e.message : 'Failed to mark paid');
+    }
+  }
+
+  async function handleDelete(bill: CcBill) {
+    if (!confirm(`Delete this bill for ${bill.paymentSourceName}? This cannot be undone.`)) return;
+    try {
+      await api.delete(`/api/cc-bills/${bill.id}`);
+      load();
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'Failed to delete');
     }
   }
 
@@ -87,12 +104,11 @@ export default function CcBillsPage() {
               No CC bills for this period. Click &ldquo;Generate Bill&rdquo; to create one from your CC expenses.
             </div>
           )}
-
           {pending.length > 0 && (
-            <Section title="Pending" bills={pending} onMarkPaid={handleMarkPaid} />
+            <Section title="Pending" bills={pending} onMarkPaid={handleMarkPaid} onEdit={setEditing} onDelete={handleDelete} />
           )}
           {paid.length > 0 && (
-            <Section title="Paid" bills={paid} onMarkPaid={handleMarkPaid} />
+            <Section title="Paid" bills={paid} onMarkPaid={handleMarkPaid} onEdit={setEditing} onDelete={handleDelete} />
           )}
         </>
       )}
@@ -104,27 +120,41 @@ export default function CcBillsPage() {
           onGenerated={() => { setShowGen(false); load(); }}
         />
       )}
+
+      {editing && (
+        <EditBillForm
+          bill={editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => { setEditing(null); load(); }}
+        />
+      )}
     </div>
   );
 }
 
-function Section({ title, bills, onMarkPaid }: { title: string; bills: CcBill[]; onMarkPaid: (b: CcBill) => void }) {
+function Section({ title, bills, onMarkPaid, onEdit, onDelete }: {
+  title: string; bills: CcBill[];
+  onMarkPaid: (b: CcBill) => void;
+  onEdit: (b: CcBill) => void;
+  onDelete: (b: CcBill) => void;
+}) {
   return (
     <div style={{ marginBottom: 24 }}>
       <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1 }}>{title}</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {bills.map(bill => {
-          const badge   = statusBadge(bill.status);
-          const due     = new Date(bill.dueDate);
-          const daysLeft = Math.ceil((due.getTime() - Date.now()) / 86400000);
+          const badge    = statusBadge(bill.status);
+          const daysLeft = daysFromNow(bill.dueDate);
           const overdue  = bill.status !== 'Paid' && daysLeft < 0;
+          const urgent   = bill.status !== 'Paid' && daysLeft >= 0 && daysLeft <= 5;
           return (
-            <div key={bill.id} style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 6px rgba(0,0,0,0.05)', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16, borderLeft: `4px solid ${overdue ? '#ef4444' : bill.status === 'Paid' ? '#10b981' : '#f59e0b'}` }}>
+            <div key={bill.id} style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 6px rgba(0,0,0,0.05)', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16, borderLeft: `4px solid ${overdue ? '#ef4444' : urgent ? '#f97316' : bill.status === 'Paid' ? '#10b981' : '#f59e0b'}` }}>
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
                   <span style={{ fontWeight: 700, fontSize: 15 }}>{bill.paymentSourceName}</span>
                   <span style={{ padding: '2px 8px', borderRadius: 10, fontSize: 11, fontWeight: 700, background: badge.bg, color: badge.color }}>{badge.label}</span>
                   {overdue && <span style={{ fontSize: 11, color: '#ef4444', fontWeight: 700 }}>OVERDUE</span>}
+                  {urgent && <span style={{ fontSize: 11, color: '#f97316', fontWeight: 700 }}>DUE SOON</span>}
                 </div>
                 <div style={{ fontSize: 12, color: '#64748b', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                   <span>Bill date: {fmtDate(bill.billingDate)}</span>
@@ -132,17 +162,72 @@ function Section({ title, bills, onMarkPaid }: { title: string; bills: CcBill[];
                   {bill.paidAt && <span>Paid on: {fmtDate(bill.paidAt)}</span>}
                 </div>
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontWeight: 700, fontSize: 18, color: bill.status === 'Paid' ? '#10b981' : '#f59e0b' }}>{fmt(bill.totalAmount)}</div>
-                {bill.status !== 'Paid' && (
-                  <button onClick={() => onMarkPaid(bill)} style={{ marginTop: 6, padding: '5px 12px', borderRadius: 7, border: 'none', background: '#10b981', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-                    Mark Paid
-                  </button>
-                )}
+              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                <div style={{ fontWeight: 700, fontSize: 18, color: bill.status === 'Paid' ? '#10b981' : overdue ? '#ef4444' : '#f59e0b' }}>{fmt(bill.totalAmount)}</div>
+                <div style={{ display: 'flex', gap: 6, marginTop: 6, justifyContent: 'flex-end' }}>
+                  {bill.status !== 'Paid' && (
+                    <button onClick={() => onMarkPaid(bill)} style={{ padding: '5px 10px', borderRadius: 7, border: 'none', background: '#10b981', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                      Mark Paid
+                    </button>
+                  )}
+                  <button onClick={() => onEdit(bill)} style={{ padding: '5px 8px', borderRadius: 7, border: '1px solid #e2e8f0', background: '#fff', color: '#3b82f6', fontSize: 12, cursor: 'pointer' }}>✏️</button>
+                  <button onClick={() => onDelete(bill)} style={{ padding: '5px 8px', borderRadius: 7, border: '1px solid #fee2e2', background: '#fff', color: '#ef4444', fontSize: 12, cursor: 'pointer' }}>🗑️</button>
+                </div>
               </div>
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+function EditBillForm({ bill, onClose, onSaved }: { bill: CcBill; onClose: () => void; onSaved: () => void }) {
+  const [amount, setAmount]   = useState(bill.totalAmount.toString());
+  const [dueDate, setDueDate] = useState(bill.dueDate.slice(0, 10));
+  const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState('');
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!amount || +amount <= 0) { setError('Enter a valid amount'); return; }
+    setLoading(true); setError('');
+    try {
+      await api.put(`/api/cc-bills/${bill.id}`, { totalAmount: +amount, dueDate: new Date(dueDate + 'T00:00:00').toISOString() });
+      onSaved();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to update');
+    } finally { setLoading(false); }
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}>
+      <div style={{ background: '#fff', borderRadius: 16, padding: 28, width: '100%', maxWidth: 380, boxShadow: '0 8px 40px rgba(0,0,0,0.15)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Edit Bill</h2>
+          <button onClick={onClose} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 20, color: '#94a3b8' }}>×</button>
+        </div>
+        <p style={{ margin: '0 0 16px', fontSize: 13, color: '#64748b' }}>
+          {bill.paymentSourceName} — {MONTHS[bill.billingMonth - 1].label} {bill.billingYear}
+        </p>
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: 14 }}>
+            <label style={labelStyle}>Total Amount (₹)</label>
+            <input style={fieldInput} type="number" min="0.01" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} />
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={labelStyle}>Due Date</label>
+            <input style={fieldInput} type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} />
+            <p style={{ margin: '4px 0 0', fontSize: 11, color: '#94a3b8' }}>
+              Set the exact due date from your bank statement
+            </p>
+          </div>
+          {error && <p style={{ color: '#ef4444', fontSize: 13, marginBottom: 12 }}>{error}</p>}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button" onClick={onClose} style={{ ...submitBtn, background: '#f1f5f9', color: '#374151' }}>Cancel</button>
+            <button type="submit" disabled={loading} style={submitBtn}>{loading ? 'Saving…' : 'Save'}</button>
+          </div>
+        </form>
       </div>
     </div>
   );
@@ -157,13 +242,14 @@ function GenerateForm({ sources, onClose, onGenerated }: { sources: PaymentSourc
   const [error, setError]       = useState('');
   const didInit = useRef(false);
 
-  // Auto-select first CC source (handles case where sources load after modal opens)
   useEffect(() => {
     if (!didInit.current && sources.length > 0) {
       setSourceId(sources[0].id);
       didInit.current = true;
     }
   }, [sources]);
+
+  const selectedSource = sources.find(s => s.id === sourceId);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -194,6 +280,11 @@ function GenerateForm({ sources, onClose, onGenerated }: { sources: PaymentSourc
               <select style={fieldInput} value={sourceId} onChange={e => setSourceId(e.target.value)}>
                 {sources.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
+              {selectedSource && !selectedSource.dueDaysAfterBilling && (
+                <p style={{ margin: '6px 0 0', fontSize: 11, color: '#f59e0b', background: '#fef3c7', padding: '5px 8px', borderRadius: 6 }}>
+                  ⚠️ &ldquo;Due days after billing&rdquo; not set for this card — due date will default to 20 days. Edit the card in Payment Sources to fix, or correct it after generating using the ✏️ edit button.
+                </p>
+              )}
             </div>
             <div style={{ marginBottom: 14 }}>
               <label style={labelStyle}>Billing Month</label>
