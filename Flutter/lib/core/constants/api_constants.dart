@@ -13,4 +13,26 @@ class ApiConstants {
 
   static const String emis = '/api/emis';
   static String emi(String id) => '/api/emis/$id';
+
+  static const String investments = '/api/investments';
+  static String investment(String id) => '/api/investments/$id';
+
+  static const String paymentSources = '/api/payment-sources';
+  static String paymentSource(String id) => '/api/payment-sources/$id';
+  static String paymentSourceStatus(String id) =>
+      '/api/payment-sources/$id/status';
+
+  static const String categories = '/api/categories';
+  static String category(String id) => '/api/categories/$id';
+
+  static const String transfers = '/api/transfers';
+  static String transfer(String id) => '/api/transfers/$id';
+
+  static const String ccBills = '/api/cc-bills';
+  static const String ccBillsGenerate = '/api/cc-bills/generate';
+  static String ccBill(String id) => '/api/cc-bills/$id';
+
+  static const String loans = '/api/loans';
+  static String loan(String id) => '/api/loans/$id';
+  static String loanPay(String id) => '/api/loans/$id/pay';
 }

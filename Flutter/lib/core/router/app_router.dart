@@ -12,6 +12,17 @@ import '../../features/incomes/screens/add_income_screen.dart';
 import '../../features/emis/screens/emis_screen.dart';
 import '../../features/emis/screens/add_emi_screen.dart';
 import '../../features/statement/screens/statement_screen.dart';
+import '../../features/investments/screens/investments_screen.dart';
+import '../../features/investments/screens/add_investment_screen.dart';
+import '../../features/payment_sources/screens/payment_sources_screen.dart';
+import '../../features/payment_sources/screens/add_payment_source_screen.dart';
+import '../../features/categories/screens/categories_screen.dart';
+import '../../features/transfers/screens/transfers_screen.dart';
+import '../../features/transfers/screens/add_transfer_screen.dart';
+import '../../features/cc_bills/screens/cc_bills_screen.dart';
+import '../../features/loans/screens/loans_screen.dart';
+import '../../features/loans/screens/add_loan_screen.dart';
+import '../../features/more/screens/more_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
@@ -69,6 +80,15 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
           GoRoute(
+            path: '/cc-bills',
+            builder: (_, _) => const CcBillsScreen(),
+          ),
+          GoRoute(
+            path: '/more',
+            builder: (_, _) => const MoreScreen(),
+          ),
+          // Routes accessible from More screen (not in bottom nav)
+          GoRoute(
             path: '/emis',
             builder: (_, _) => const EmisScreen(),
             routes: [
@@ -87,6 +107,70 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/statement',
             builder: (_, _) => const StatementScreen(),
           ),
+          GoRoute(
+            path: '/investments',
+            builder: (_, _) => const InvestmentsScreen(),
+            routes: [
+              GoRoute(
+                path: 'add',
+                builder: (_, _) => const AddInvestmentScreen(),
+              ),
+              GoRoute(
+                path: 'edit/:id',
+                builder: (_, state) => AddInvestmentScreen(
+                    investmentId: state.pathParameters['id']),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: '/payment-sources',
+            builder: (_, _) => const PaymentSourcesScreen(),
+            routes: [
+              GoRoute(
+                path: 'add',
+                builder: (_, _) => const AddPaymentSourceScreen(),
+              ),
+              GoRoute(
+                path: 'edit/:id',
+                builder: (_, state) => AddPaymentSourceScreen(
+                    sourceId: state.pathParameters['id']),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: '/categories',
+            builder: (_, _) => const CategoriesScreen(),
+          ),
+          GoRoute(
+            path: '/transfers',
+            builder: (_, _) => const TransfersScreen(),
+            routes: [
+              GoRoute(
+                path: 'add',
+                builder: (_, _) => const AddTransferScreen(),
+              ),
+              GoRoute(
+                path: 'edit/:id',
+                builder: (_, state) => AddTransferScreen(
+                    transferId: state.pathParameters['id']),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: '/loans',
+            builder: (_, _) => const LoansScreen(),
+            routes: [
+              GoRoute(
+                path: 'add',
+                builder: (_, _) => const AddLoanScreen(),
+              ),
+              GoRoute(
+                path: 'edit/:id',
+                builder: (_, state) =>
+                    AddLoanScreen(loanId: state.pathParameters['id']),
+              ),
+            ],
+          ),
         ],
       ),
     ],
@@ -103,9 +187,10 @@ class AppShell extends StatelessWidget {
     if (loc.startsWith('/dashboard')) return 0;
     if (loc.startsWith('/expenses')) return 1;
     if (loc.startsWith('/incomes')) return 2;
-    if (loc.startsWith('/emis')) return 3;
-    if (loc.startsWith('/statement')) return 4;
-    return 0;
+    if (loc.startsWith('/cc-bills')) return 3;
+    if (loc.startsWith('/more')) return 4;
+    // Sub-pages reached from More still highlight More tab
+    return 4;
   }
 
   @override
@@ -124,9 +209,9 @@ class AppShell extends StatelessWidget {
             case 2:
               context.go('/incomes');
             case 3:
-              context.go('/emis');
+              context.go('/cc-bills');
             case 4:
-              context.go('/statement');
+              context.go('/more');
           }
         },
         items: const [
@@ -148,12 +233,12 @@ class AppShell extends StatelessWidget {
           BottomNavigationBarItem(
             icon: Icon(Icons.credit_card_outlined),
             activeIcon: Icon(Icons.credit_card),
-            label: 'EMIs',
+            label: 'CC Bills',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart_outlined),
-            activeIcon: Icon(Icons.bar_chart),
-            label: 'Statement',
+            icon: Icon(Icons.grid_view_outlined),
+            activeIcon: Icon(Icons.grid_view),
+            label: 'More',
           ),
         ],
       ),
