@@ -35,18 +35,14 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
   }
 
   void _prevMonth() {
-    setState(() {
-      _period = DateTime(_period.year, _period.month - 1);
-    });
+    setState(() => _period = DateTime(_period.year, _period.month - 1));
     _load();
   }
 
   void _nextMonth() {
     final now = DateTime.now();
     if (_period.year == now.year && _period.month == now.month) return;
-    setState(() {
-      _period = DateTime(_period.year, _period.month + 1);
-    });
+    setState(() => _period = DateTime(_period.year, _period.month + 1));
     _load();
   }
 
@@ -59,11 +55,34 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
     }
   }
 
+  /// Groups expenses by calendar day (most recent first).
+  Map<DateTime, List<Expense>> _groupByDate(List<Expense> expenses) {
+    final map = <DateTime, List<Expense>>{};
+    for (final e in expenses) {
+      final day = DateTime(e.date.year, e.date.month, e.date.day);
+      map.putIfAbsent(day, () => []).add(e);
+    }
+    final sorted = map.keys.toList()..sort((a, b) => b.compareTo(a));
+    return {for (final k in sorted) k: map[k]!};
+  }
+
+  String _dayLabel(DateTime day) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    if (day == today) return 'Today';
+    if (day == yesterday) return 'Yesterday';
+    // e.g. "Monday, 7 Aug"
+    return DateFormat('EEEE, d MMM').format(day);
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(expenseProvider);
     final total = state.expenses.fold(0.0, (s, e) => s + e.amount);
     final fmt = NumberFormat('#,##0.00');
+    final grouped = _groupByDate(state.expenses);
+    final days = grouped.keys.toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -86,14 +105,14 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
       ),
       body: Column(
         children: [
+          // Total summary card
           Container(
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             decoration: BoxDecoration(
               color: AppTheme.expense.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(14),
-              border:
-                  Border.all(color: AppTheme.expense.withValues(alpha: 0.3)),
+              border: Border.all(color: AppTheme.expense.withValues(alpha: 0.3)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -108,29 +127,68 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
               ],
             ),
           ),
+
           Expanded(
             child: state.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : state.expenses.isEmpty
                     ? const Center(
                         child: Text('No expenses for this month',
-                            style:
-                                TextStyle(color: AppTheme.textSecondary)))
+                            style: TextStyle(color: AppTheme.textSecondary)))
                     : RefreshIndicator(
                         onRefresh: () async => _load(),
-                        child: ListView.separated(
+                        child: ListView.builder(
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                          itemCount: state.expenses.length,
-                          separatorBuilder: (_, _) => const SizedBox(height: 8),
+                          itemCount: days.length,
                           itemBuilder: (_, i) {
-                            final e = state.expenses[i];
-                            return _ExpenseCard(
-                              expense: e,
-                              onEdit: () async {
-                                await context.push('/expenses/edit/${e.id}');
-                                _load();
-                              },
-                              onDelete: () => _delete(e),
+                            final day = days[i];
+                            final dayExpenses = grouped[day]!;
+                            final dayTotal = dayExpenses.fold(
+                                0.0, (s, e) => s + e.amount);
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Date group header
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.only(top: 16, bottom: 6),
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        _dayLabel(day),
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppTheme.textSecondary,
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      Text(
+                                        '₹${NumberFormat('#,##0.00').format(dayTotal)}',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppTheme.expense,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                // Expenses for this day
+                                ...dayExpenses.map((e) => Padding(
+                                      padding:
+                                          const EdgeInsets.only(bottom: 8),
+                                      child: _ExpenseCard(
+                                        expense: e,
+                                        onEdit: () async {
+                                          await context
+                                              .push('/expenses/edit/${e.id}');
+                                          _load();
+                                        },
+                                        onDelete: () => _delete(e),
+                                      ),
+                                    )),
+                              ],
                             );
                           },
                         ),
@@ -160,8 +218,7 @@ class _MonthNavigator extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          IconButton(
-              onPressed: onPrev, icon: const Icon(Icons.chevron_left)),
+          IconButton(onPressed: onPrev, icon: const Icon(Icons.chevron_left)),
           Text(
             DateFormat('MMMM yyyy').format(period),
             style: const TextStyle(fontWeight: FontWeight.w600),
@@ -190,8 +247,8 @@ class _ExpenseCard extends StatelessWidget {
         child: ListTile(
           leading: CircleAvatar(
             backgroundColor: AppTheme.expense.withValues(alpha: 0.15),
-            child:
-                const Icon(Icons.trending_down, color: AppTheme.expense, size: 18),
+            child: const Icon(Icons.trending_down,
+                color: AppTheme.expense, size: 18),
           ),
           title: Text(expense.category,
               style: const TextStyle(fontWeight: FontWeight.w500)),
@@ -208,27 +265,17 @@ class _ExpenseCard extends StatelessWidget {
                         color: AppTheme.textSecondary, fontSize: 12),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis),
-              Text(DateFormat('dd MMM yyyy').format(expense.date),
-                  style: const TextStyle(
-                      color: AppTheme.textSecondary, fontSize: 11)),
             ],
           ),
-          isThreeLine: true,
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '₹${NumberFormat('#,##0.00').format(expense.amount)}',
-                    style: const TextStyle(
-                        color: AppTheme.expense,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15),
-                  ),
-                ],
+              Text(
+                '₹${NumberFormat('#,##0.00').format(expense.amount)}',
+                style: const TextStyle(
+                    color: AppTheme.expense,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15),
               ),
               PopupMenuButton<String>(
                 icon: const Icon(Icons.more_vert,
