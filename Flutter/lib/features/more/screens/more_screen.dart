@@ -50,6 +50,12 @@ class MoreScreen extends StatelessWidget {
         color: AppTheme.textSecondary,
         route: '/statement',
       ),
+      _MoreItem(
+        label: 'Khata',
+        icon: Icons.menu_book_outlined,
+        color: const Color(0xFFE67E22),
+        route: '/khata',
+      ),
     ];
 
     return Scaffold(

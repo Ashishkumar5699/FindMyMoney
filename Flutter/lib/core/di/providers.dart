@@ -11,6 +11,7 @@ import '../../data/repositories/category_repository_impl.dart';
 import '../../data/repositories/transfer_repository_impl.dart';
 import '../../data/repositories/cc_bill_repository_impl.dart';
 import '../../data/repositories/loan_repository_impl.dart';
+import '../../data/repositories/khata_repository_impl.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/repositories/expense_repository.dart';
 import '../../domain/repositories/income_repository.dart';
@@ -21,6 +22,7 @@ import '../../domain/repositories/category_repository.dart';
 import '../../domain/repositories/transfer_repository.dart';
 import '../../domain/repositories/cc_bill_repository.dart';
 import '../../domain/repositories/loan_repository.dart';
+import '../../domain/repositories/khata_repository.dart';
 
 final dioProvider = Provider<Dio>((ref) => createDio());
 
@@ -62,4 +64,8 @@ final ccBillRepositoryProvider = Provider<CcBillRepository>(
 
 final loanRepositoryProvider = Provider<LoanRepository>(
   (ref) => LoanRepositoryImpl(ref.read(dioProvider)),
+);
+
+final khataRepositoryProvider = Provider<KhataRepository>(
+  (ref) => KhataRepositoryImpl(ref.read(dioProvider)),
 );

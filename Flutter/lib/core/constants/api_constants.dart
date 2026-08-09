@@ -35,4 +35,10 @@ class ApiConstants {
   static const String loans = '/api/loans';
   static String loan(String id) => '/api/loans/$id';
   static String loanPay(String id) => '/api/loans/$id/pay';
+
+  static const String khataContacts = '/api/khata';
+  static String khataContact(String id) => '/api/khata/$id';
+  static String khataTransactions(String contactId) => '/api/khata/$contactId/transactions';
+  static String khataTransaction(String contactId, String txnId) => '/api/khata/$contactId/transactions/$txnId';
+  static String khataSettle(String contactId) => '/api/khata/$contactId/settle';
 }
