@@ -24,6 +24,8 @@ import '../../features/loans/screens/loans_screen.dart';
 import '../../features/loans/screens/add_loan_screen.dart';
 import '../../features/more/screens/more_screen.dart';
 import '../../features/khata/screens/khata_screen.dart';
+import '../../features/settings/screens/settings_screen.dart';
+import '../../features/loans_emis/screens/loans_emis_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
@@ -175,6 +177,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/khata',
             builder: (_, _) => const KhataScreen(),
+          ),
+          GoRoute(
+            path: '/settings',
+            builder: (_, _) => const SettingsScreen(),
+          ),
+          GoRoute(
+            path: '/loans-emis',
+            builder: (_, _) => const LoansEmisScreen(),
           ),
         ],
       ),
