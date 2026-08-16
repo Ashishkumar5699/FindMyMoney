@@ -9,10 +9,10 @@ class MoreScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = [
       _MoreItem(
-        label: 'EMIs',
-        icon: Icons.credit_card_outlined,
+        label: 'Loans & EMIs',
+        icon: Icons.account_balance_outlined,
         color: AppTheme.emi,
-        route: '/emis',
+        route: '/loans-emis',
       ),
       _MoreItem(
         label: 'Investments',
@@ -27,22 +27,10 @@ class MoreScreen extends StatelessWidget {
         route: '/transfers',
       ),
       _MoreItem(
-        label: 'Loans',
-        icon: Icons.handshake_outlined,
-        color: AppTheme.expense,
-        route: '/loans',
-      ),
-      _MoreItem(
-        label: 'Categories',
-        icon: Icons.category_outlined,
-        color: const Color(0xFF9B59B6),
-        route: '/categories',
-      ),
-      _MoreItem(
-        label: 'Payment Sources',
-        icon: Icons.account_balance_wallet_outlined,
-        color: const Color(0xFF1ABC9C),
-        route: '/payment-sources',
+        label: 'Khata',
+        icon: Icons.menu_book_outlined,
+        color: const Color(0xFFE67E22),
+        route: '/khata',
       ),
       _MoreItem(
         label: 'Statement',
@@ -51,10 +39,10 @@ class MoreScreen extends StatelessWidget {
         route: '/statement',
       ),
       _MoreItem(
-        label: 'Khata',
-        icon: Icons.menu_book_outlined,
-        color: const Color(0xFFE67E22),
-        route: '/khata',
+        label: 'Settings',
+        icon: Icons.settings_outlined,
+        color: const Color(0xFF607D8B),
+        route: '/settings',
       ),
     ];
 

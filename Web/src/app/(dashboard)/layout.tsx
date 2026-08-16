@@ -6,18 +6,16 @@ import { getToken, clearAuth, getUser } from '@/stores/auth';
 import { api } from '@/lib/api';
 
 const NAV = [
-  { href: '/dashboard',        label: 'Dashboard',       icon: '📊' },
-  { href: '/expenses',         label: 'Expenses',        icon: '💸' },
-  { href: '/incomes',          label: 'Incomes',         icon: '💰' },
-  { href: '/emis',             label: 'EMIs',            icon: '🏦' },
-  { href: '/investments',      label: 'Investments',     icon: '📈' },
-  { href: '/cc-bills',         label: 'CC Bills',        icon: '🧾' },
-  { href: '/transfers',        label: 'Transfers',       icon: '🔄' },
-  { href: '/loans',            label: 'Loans',           icon: '🤝' },
-  { href: '/khata',            label: 'Khata',           icon: '📒' },
-  { href: '/categories',       label: 'Categories',      icon: '🏷️' },
-  { href: '/payment-sources',  label: 'Payment Sources', icon: '💳' },
-  { href: '/statement',        label: 'Statement',       icon: '📄' },
+  { href: '/dashboard',   label: 'Dashboard',    icon: '📊' },
+  { href: '/expenses',    label: 'Expenses',     icon: '💸' },
+  { href: '/incomes',     label: 'Incomes',      icon: '💰' },
+  { href: '/loans-emis',  label: 'Loans & EMIs', icon: '🏦' },
+  { href: '/investments', label: 'Investments',  icon: '📈' },
+  { href: '/cc-bills',    label: 'CC Bills',     icon: '🧾' },
+  { href: '/transfers',   label: 'Transfers',    icon: '🔄' },
+  { href: '/khata',       label: 'Khata',        icon: '📒' },
+  { href: '/statement',   label: 'Statement',    icon: '📄' },
+  { href: '/settings',    label: 'Settings',     icon: '⚙️' },
 ];
 
 interface PaymentSource {
