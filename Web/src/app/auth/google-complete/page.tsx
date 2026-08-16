@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { setAuth } from '@/stores/auth';
 
-export default function GoogleCompletePage() {
+function GoogleCompleteInner() {
   const router = useRouter();
   const params = useSearchParams();
 
@@ -19,9 +19,16 @@ export default function GoogleCompletePage() {
     }
   }, [params, router]);
 
+  return null;
+}
+
+export default function GoogleCompletePage() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg,#dbeafe 0%,#f8fafc 100%)' }}>
       <p style={{ color: '#64748b', fontSize: 15 }}>Signing you in…</p>
+      <Suspense>
+        <GoogleCompleteInner />
+      </Suspense>
     </div>
   );
 }
