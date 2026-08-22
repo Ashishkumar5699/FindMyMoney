@@ -12,33 +12,77 @@ jobs:
 
     env:
       VERCEL_ORG_ID: team_UtKuX5197XYDwbUS3o7wmqXO
-      # Next.js web project (findmymoney-web) — different from Flutter project
       VERCEL_PROJECT_ID: prj_gqvQyMAT2JYTA6IH2EKucVWIj18S
 
     steps:
-      - name: Upsert PNJB_AI_CORE_URL
+      - name: Upsert env vars via Vercel REST API
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VALUE: ${{ secrets.PNJB_AI_CORE_URL }}
+          PNJB_AI_CORE_URL: ${{ secrets.PNJB_AI_CORE_URL }}
+          PNJB_AI_PLATFORM_KEY: ${{ secrets.PNJB_AI_PLATFORM_KEY }}
         run: |
-          npx vercel@latest env rm PNJB_AI_CORE_URL production \
-            --token "$VERCEL_TOKEN" --yes 2>/dev/null || true
-          echo "$VALUE" | npx vercel@latest env add PNJB_AI_CORE_URL production \
-            --token "$VERCEL_TOKEN" --yes
+          upsert_env() {
+            local KEY="$1"
+            local VALUE="$2"
 
-      - name: Upsert PNJB_AI_PLATFORM_KEY
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VALUE: ${{ secrets.PNJB_AI_PLATFORM_KEY }}
-        run: |
-          npx vercel@latest env rm PNJB_AI_PLATFORM_KEY production \
-            --token "$VERCEL_TOKEN" --yes 2>/dev/null || true
-          echo "$VALUE" | npx vercel@latest env add PNJB_AI_PLATFORM_KEY production \
-            --token "$VERCEL_TOKEN" --yes
+            # Get existing env var ID for production target
+            ENV_ID=$(curl -sf \
+              "https://api.vercel.com/v9/projects/${VERCEL_PROJECT_ID}/env?teamId=${VERCEL_ORG_ID}" \
+              -H "Authorization: Bearer ${VERCEL_TOKEN}" \
+              | python3 -c "
+          import json, sys
+          data = json.load(sys.stdin)
+          envs = data.get('envs', [])
+          match = next((e for e in envs if e['key'] == '${KEY}' and 'production' in e.get('target', [])), None)
+          print(match['id'] if match else '')
+          " 2>/dev/null || echo "")
 
-      - name: Trigger Vercel redeploy (picks up new env vars)
+            if [ -n "$ENV_ID" ]; then
+              echo "Updating $KEY (id: $ENV_ID)"
+              curl -sf -X PATCH \
+                "https://api.vercel.com/v9/projects/${VERCEL_PROJECT_ID}/env/${ENV_ID}?teamId=${VERCEL_ORG_ID}" \
+                -H "Authorization: Bearer ${VERCEL_TOKEN}" \
+                -H "Content-Type: application/json" \
+                -d "{\"value\":\"${VALUE}\",\"type\":\"encrypted\",\"target\":[\"production\",\"preview\"]}" \
+                > /dev/null
+            else
+              echo "Creating $KEY"
+              curl -sf -X POST \
+                "https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/env?teamId=${VERCEL_ORG_ID}" \
+                -H "Authorization: Bearer ${VERCEL_TOKEN}" \
+                -H "Content-Type: application/json" \
+                -d "[{\"key\":\"${KEY}\",\"value\":\"${VALUE}\",\"type\":\"encrypted\",\"target\":[\"production\",\"preview\"]}]" \
+                > /dev/null
+            fi
+            echo "$KEY done"
+          }
+
+          upsert_env "PNJB_AI_CORE_URL" "$PNJB_AI_CORE_URL"
+          upsert_env "PNJB_AI_PLATFORM_KEY" "$PNJB_AI_PLATFORM_KEY"
+
+      - name: Trigger Vercel redeploy
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
-          npx vercel@latest redeploy --prod \
-            --token "$VERCEL_TOKEN" --yes 2>/dev/null || true
+          # Get latest production deployment ID
+          DEPLOY_ID=$(curl -sf \
+            "https://api.vercel.com/v6/deployments?projectId=${VERCEL_PROJECT_ID}&teamId=${VERCEL_ORG_ID}&target=production&limit=1" \
+            -H "Authorization: Bearer ${VERCEL_TOKEN}" \
+            | python3 -c "
+          import json, sys
+          data = json.load(sys.stdin)
+          deps = data.get('deployments', [])
+          print(deps[0]['uid'] if deps else '')
+          " 2>/dev/null || echo "")
+
+          if [ -n "$DEPLOY_ID" ]; then
+            echo "Redeploying $DEPLOY_ID with new env vars"
+            curl -sf -X POST \
+              "https://api.vercel.com/v13/deployments?teamId=${VERCEL_ORG_ID}&forceNew=1" \
+              -H "Authorization: Bearer ${VERCEL_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d "{\"deploymentId\":\"${DEPLOY_ID}\",\"name\":\"findmymoney-web\",\"target\":\"production\"}" \
+              > /dev/null && echo "Redeploy triggered" || echo "Redeploy skipped (will deploy on next push)"
+          else
+            echo "No existing production deployment found — Vercel will deploy on next push"
+          fi
