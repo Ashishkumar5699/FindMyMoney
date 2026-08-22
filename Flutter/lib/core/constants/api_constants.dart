@@ -36,6 +36,8 @@ class ApiConstants {
   static String loan(String id) => '/api/loans/$id';
   static String loanPay(String id) => '/api/loans/$id/pay';
 
+  static const String aiChat = '/api/ai/chat';
+
   static const String khataContacts = '/api/khata';
   static String khataContact(String id) => '/api/khata/$id';
   static String khataTransactions(String contactId) => '/api/khata/$contactId/transactions';

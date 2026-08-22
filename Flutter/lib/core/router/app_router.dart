@@ -26,6 +26,7 @@ import '../../features/more/screens/more_screen.dart';
 import '../../features/khata/screens/khata_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
 import '../../features/loans_emis/screens/loans_emis_screen.dart';
+import '../../features/ai_chat/screens/ai_chat_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
@@ -185,6 +186,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/loans-emis',
             builder: (_, _) => const LoansEmisScreen(),
+          ),
+          GoRoute(
+            path: '/ai-chat',
+            builder: (_, _) => const AiChatScreen(),
           ),
         ],
       ),

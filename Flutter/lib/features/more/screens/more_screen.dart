@@ -44,6 +44,12 @@ class MoreScreen extends StatelessWidget {
         color: const Color(0xFF607D8B),
         route: '/settings',
       ),
+      _MoreItem(
+        label: 'Finance AI',
+        icon: Icons.auto_awesome_outlined,
+        color: const Color(0xFF6C63FF),
+        route: '/ai-chat',
+      ),
     ];
 
     return Scaffold(
