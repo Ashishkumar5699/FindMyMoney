@@ -25,7 +25,6 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           AI_CORE_URL: ${{ secrets.PNJB_AI_CORE_URL }}
           AI_PLATFORM_KEY: ${{ secrets.PNJB_AI_PLATFORM_KEY }}
-        working-directory: Web
         run: |
           npx vercel@latest --prod \
             --env PNJB_AI_CORE_URL="$AI_CORE_URL" \
