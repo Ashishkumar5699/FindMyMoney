@@ -4,6 +4,7 @@ import { useEffect, useState, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { getToken, clearAuth, getUser } from '@/stores/auth';
 import { api } from '@/lib/api';
+import AiChatPanel from '@/components/AiChatPanel';
 
 const NAV = [
   { href: '/dashboard',   label: 'Dashboard',    icon: '📊' },
@@ -144,6 +145,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <main className="main-content" style={billingToday.length > 0 && !dismissed ? { paddingTop: 40 } : {}}>
         {children}
       </main>
+
+      {/* ── AI Chat Panel ── */}
+      <AiChatPanel />
 
       {/* ── Mobile bottom nav ── */}
       <nav className="bottom-nav">
