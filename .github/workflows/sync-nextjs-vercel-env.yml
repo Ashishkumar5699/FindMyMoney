@@ -1,0 +1,44 @@
+name: Sync Next.js Vercel Env
+
+on:
+  push:
+    branches: [Stable]
+  workflow_dispatch:
+
+jobs:
+  sync-env:
+    name: Upsert AI env vars → Vercel (Next.js)
+    runs-on: ubuntu-latest
+
+    env:
+      VERCEL_ORG_ID: team_UtKuX5197XYDwbUS3o7wmqXO
+      # Next.js web project (findmymoney-web) — different from Flutter project
+      VERCEL_PROJECT_ID: prj_gqvQyMAT2JYTA6IH2EKucVWIj18S
+
+    steps:
+      - name: Upsert PNJB_AI_CORE_URL
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VALUE: ${{ secrets.PNJB_AI_CORE_URL }}
+        run: |
+          npx vercel@latest env rm PNJB_AI_CORE_URL production \
+            --token "$VERCEL_TOKEN" --yes 2>/dev/null || true
+          echo "$VALUE" | npx vercel@latest env add PNJB_AI_CORE_URL production \
+            --token "$VERCEL_TOKEN" --yes
+
+      - name: Upsert PNJB_AI_PLATFORM_KEY
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VALUE: ${{ secrets.PNJB_AI_PLATFORM_KEY }}
+        run: |
+          npx vercel@latest env rm PNJB_AI_PLATFORM_KEY production \
+            --token "$VERCEL_TOKEN" --yes 2>/dev/null || true
+          echo "$VALUE" | npx vercel@latest env add PNJB_AI_PLATFORM_KEY production \
+            --token "$VERCEL_TOKEN" --yes
+
+      - name: Trigger Vercel redeploy (picks up new env vars)
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          npx vercel@latest redeploy --prod \
+            --token "$VERCEL_TOKEN" --yes 2>/dev/null || true
