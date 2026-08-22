@@ -13,14 +13,12 @@ jobs:
     name: Upsert AI env vars → Vercel (Next.js)
     runs-on: ubuntu-latest
 
-    env:
-      VERCEL_ORG_ID: team_UtKuX5197XYDwbUS3o7wmqXO
-
     steps:
       - uses: actions/checkout@v4
 
       # Create .vercel/project.json so the CLI knows which project to target.
-      # Project ID confirmed from Web/.vercel/project.json (findmymoney-web, Next.js).
+      # Do NOT set VERCEL_ORG_ID as an env var — if only one of the two is set
+      # the CLI errors. Let it read both orgId and projectId from this file.
       - name: Link Vercel project (Next.js)
         run: |
           mkdir -p Web/.vercel
