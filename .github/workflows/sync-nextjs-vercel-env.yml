@@ -22,6 +22,18 @@ jobs:
 
       # Use Vercel REST API directly — no CLI project-linking needed.
       # All endpoints require ?teamId for team-owned projects.
+      # Debug: verify API token can reach the project at all
+      - name: Debug — probe Vercel project API
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          echo "Probing project (response body shown for diagnosis):"
+          HTTP=$(curl -sw "%{http_code}" -o /tmp/vprobe.json \
+            "https://api.vercel.com/v9/projects/$PROJECT_ID?teamId=$TEAM_ID" \
+            -H "Authorization: Bearer $VERCEL_TOKEN")
+          echo "HTTP $HTTP"
+          cat /tmp/vprobe.json
+
       - name: Upsert PNJB_AI_CORE_URL
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
@@ -32,22 +44,24 @@ jobs:
           AUTH="Authorization: Bearer $VERCEL_TOKEN"
 
           # List existing env vars to find the ID of PNJB_AI_CORE_URL (if present)
-          RESP=$(curl -sf "$BASE?$QUERY" -H "$AUTH" || echo '{}')
-          ENV_ID=$(echo "$RESP" | jq -r '(.envs // [])[] | select(.key == "PNJB_AI_CORE_URL") | .id' | head -1)
+          RESP=$(curl -s "$BASE?$QUERY" -H "$AUTH")
+          echo "List HTTP response (trimmed): $(echo "$RESP" | head -c 200)"
+          ENV_ID=$(echo "$RESP" | jq -r '(.envs // [])[] | select(.key == "PNJB_AI_CORE_URL") | .id' 2>/dev/null | head -1)
 
           # Delete existing entry if found
           if [ -n "$ENV_ID" ]; then
             echo "Deleting existing env $ENV_ID"
-            curl -sf -X DELETE "$BASE/$ENV_ID?$QUERY" -H "$AUTH"
+            curl -s -X DELETE "$BASE/$ENV_ID?$QUERY" -H "$AUTH"
           fi
 
           # Create new entry
           BODY=$(jq -n --arg v "$VALUE" \
             '{key:"PNJB_AI_CORE_URL",value:$v,type:"plain",target:["production"]}')
-          curl -sf -X POST "$BASE?$QUERY" \
-            -H "$AUTH" -H "Content-Type: application/json" \
-            -d "$BODY"
-          echo "PNJB_AI_CORE_URL set."
+          HTTP=$(curl -sw "%{http_code}" -o /tmp/vcreate.json -X POST "$BASE?$QUERY" \
+            -H "$AUTH" -H "Content-Type: application/json" -d "$BODY")
+          echo "Create HTTP $HTTP"
+          cat /tmp/vcreate.json
+          [ "$HTTP" -ge 200 ] && [ "$HTTP" -lt 300 ] || exit 1
 
       - name: Upsert PNJB_AI_PLATFORM_KEY
         env:
@@ -58,20 +72,21 @@ jobs:
           QUERY="teamId=$TEAM_ID"
           AUTH="Authorization: Bearer $VERCEL_TOKEN"
 
-          RESP=$(curl -sf "$BASE?$QUERY" -H "$AUTH" || echo '{}')
-          ENV_ID=$(echo "$RESP" | jq -r '(.envs // [])[] | select(.key == "PNJB_AI_PLATFORM_KEY") | .id' | head -1)
+          RESP=$(curl -s "$BASE?$QUERY" -H "$AUTH")
+          ENV_ID=$(echo "$RESP" | jq -r '(.envs // [])[] | select(.key == "PNJB_AI_PLATFORM_KEY") | .id' 2>/dev/null | head -1)
 
           if [ -n "$ENV_ID" ]; then
             echo "Deleting existing env $ENV_ID"
-            curl -sf -X DELETE "$BASE/$ENV_ID?$QUERY" -H "$AUTH"
+            curl -s -X DELETE "$BASE/$ENV_ID?$QUERY" -H "$AUTH"
           fi
 
           BODY=$(jq -n --arg v "$VALUE" \
             '{key:"PNJB_AI_PLATFORM_KEY",value:$v,type:"plain",target:["production"]}')
-          curl -sf -X POST "$BASE?$QUERY" \
-            -H "$AUTH" -H "Content-Type: application/json" \
-            -d "$BODY"
-          echo "PNJB_AI_PLATFORM_KEY set."
+          HTTP=$(curl -sw "%{http_code}" -o /tmp/vcreate2.json -X POST "$BASE?$QUERY" \
+            -H "$AUTH" -H "Content-Type: application/json" -d "$BODY")
+          echo "Create HTTP $HTTP"
+          cat /tmp/vcreate2.json
+          [ "$HTTP" -ge 200 ] && [ "$HTTP" -lt 300 ] || exit 1
 
       - name: Deploy Next.js (production)
         if: github.ref == 'refs/heads/Stable'
