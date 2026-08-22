@@ -13,86 +13,49 @@ jobs:
     name: Upsert AI env vars → Vercel (Next.js)
     runs-on: ubuntu-latest
 
+    # Mirror the pattern from deploy-web.yml — set BOTH ORG and PROJECT
+    # so the Vercel CLI doesn't complain about missing project context.
     env:
-      PROJECT_ID: prj_gqvQyMAT2JYTA6IH2EKucVWIj18S
-      TEAM_ID: team_UtKuX5197XYDwbUS3o7wmqXO
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_WEB_PROJECT_ID }}
 
     steps:
       - uses: actions/checkout@v4
 
-      # Use Vercel REST API directly — no CLI project-linking needed.
-      # All endpoints require ?teamId for team-owned projects.
-      # Debug: verify API token can reach the project at all
-      - name: Debug — probe Vercel project API
+      # Create .vercel/project.json as a belt-and-suspenders link for CLI
+      - name: Link Vercel project (Next.js)
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          PROJECT_ID: ${{ secrets.VERCEL_WEB_PROJECT_ID }}
+          ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
         run: |
-          echo "Probing project (response body shown for diagnosis):"
-          HTTP=$(curl -sw "%{http_code}" -o /tmp/vprobe.json \
-            "https://api.vercel.com/v9/projects/$PROJECT_ID?teamId=$TEAM_ID" \
-            -H "Authorization: Bearer $VERCEL_TOKEN")
-          echo "HTTP $HTTP"
-          cat /tmp/vprobe.json
+          mkdir -p Web/.vercel
+          echo "{\"projectId\":\"$PROJECT_ID\",\"orgId\":\"$ORG_ID\"}" > Web/.vercel/project.json
 
       - name: Upsert PNJB_AI_CORE_URL
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VALUE: ${{ secrets.PNJB_AI_CORE_URL }}
+        working-directory: Web
         run: |
-          BASE="https://api.vercel.com/v9/projects/$PROJECT_ID/env"
-          QUERY="teamId=$TEAM_ID"
-          AUTH="Authorization: Bearer $VERCEL_TOKEN"
-
-          # List existing env vars to find the ID of PNJB_AI_CORE_URL (if present)
-          RESP=$(curl -s "$BASE?$QUERY" -H "$AUTH")
-          echo "List HTTP response (trimmed): $(echo "$RESP" | head -c 200)"
-          ENV_ID=$(echo "$RESP" | jq -r '(.envs // [])[] | select(.key == "PNJB_AI_CORE_URL") | .id' 2>/dev/null | head -1)
-
-          # Delete existing entry if found
-          if [ -n "$ENV_ID" ]; then
-            echo "Deleting existing env $ENV_ID"
-            curl -s -X DELETE "$BASE/$ENV_ID?$QUERY" -H "$AUTH"
-          fi
-
-          # Create new entry
-          BODY=$(jq -n --arg v "$VALUE" \
-            '{key:"PNJB_AI_CORE_URL",value:$v,type:"plain",target:["production"]}')
-          HTTP=$(curl -sw "%{http_code}" -o /tmp/vcreate.json -X POST "$BASE?$QUERY" \
-            -H "$AUTH" -H "Content-Type: application/json" -d "$BODY")
-          echo "Create HTTP $HTTP"
-          cat /tmp/vcreate.json
-          [ "$HTTP" -ge 200 ] && [ "$HTTP" -lt 300 ] || exit 1
+          npx vercel@latest env rm PNJB_AI_CORE_URL production \
+            --token "$VERCEL_TOKEN" --yes 2>/dev/null || true
+          echo "$VALUE" | npx vercel@latest env add PNJB_AI_CORE_URL production \
+            --token "$VERCEL_TOKEN" --yes
 
       - name: Upsert PNJB_AI_PLATFORM_KEY
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VALUE: ${{ secrets.PNJB_AI_PLATFORM_KEY }}
+        working-directory: Web
         run: |
-          BASE="https://api.vercel.com/v9/projects/$PROJECT_ID/env"
-          QUERY="teamId=$TEAM_ID"
-          AUTH="Authorization: Bearer $VERCEL_TOKEN"
-
-          RESP=$(curl -s "$BASE?$QUERY" -H "$AUTH")
-          ENV_ID=$(echo "$RESP" | jq -r '(.envs // [])[] | select(.key == "PNJB_AI_PLATFORM_KEY") | .id' 2>/dev/null | head -1)
-
-          if [ -n "$ENV_ID" ]; then
-            echo "Deleting existing env $ENV_ID"
-            curl -s -X DELETE "$BASE/$ENV_ID?$QUERY" -H "$AUTH"
-          fi
-
-          BODY=$(jq -n --arg v "$VALUE" \
-            '{key:"PNJB_AI_PLATFORM_KEY",value:$v,type:"plain",target:["production"]}')
-          HTTP=$(curl -sw "%{http_code}" -o /tmp/vcreate2.json -X POST "$BASE?$QUERY" \
-            -H "$AUTH" -H "Content-Type: application/json" -d "$BODY")
-          echo "Create HTTP $HTTP"
-          cat /tmp/vcreate2.json
-          [ "$HTTP" -ge 200 ] && [ "$HTTP" -lt 300 ] || exit 1
+          npx vercel@latest env rm PNJB_AI_PLATFORM_KEY production \
+            --token "$VERCEL_TOKEN" --yes 2>/dev/null || true
+          echo "$VALUE" | npx vercel@latest env add PNJB_AI_PLATFORM_KEY production \
+            --token "$VERCEL_TOKEN" --yes
 
       - name: Deploy Next.js (production)
         if: github.ref == 'refs/heads/Stable'
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: team_UtKuX5197XYDwbUS3o7wmqXO
-          VERCEL_PROJECT_ID: prj_gqvQyMAT2JYTA6IH2EKucVWIj18S
         working-directory: Web
         run: npx vercel@latest --prod --token "$VERCEL_TOKEN" --yes
