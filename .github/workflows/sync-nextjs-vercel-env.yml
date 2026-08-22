@@ -15,7 +15,7 @@ jobs:
 
     env:
       VERCEL_ORG_ID: team_UtKuX5197XYDwbUS3o7wmqXO
-      VERCEL_PROJECT_ID: prj_gqvQyMAT2JYTA6IH2EKucVWIj18S
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_WEB_PROJECT_ID }}
 
     steps:
       - uses: actions/checkout@v4
