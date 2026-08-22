@@ -1,61 +1,34 @@
-name: Sync Next.js Vercel Env
+name: Deploy Next.js (Web)
 
-# Run whenever Stable is updated, or trigger manually to push a new server URL.
-# To update the AI server URL: update PNJB_AI_CORE_URL in GitHub Secrets, then
-# run this workflow via Actions → "Run workflow".
+# Deploys findmymoney-web to Vercel, injecting AI env vars from GitHub Secrets
+# at deployment time. To update the AI server URL: change PNJB_AI_CORE_URL in
+# GitHub Secrets → push to Stable (or trigger manually) → new deployment picks it up.
 on:
   push:
     branches: [Stable]
   workflow_dispatch:
 
 jobs:
-  sync-env:
-    name: Upsert AI env vars → Vercel (Next.js)
+  deploy:
+    name: Deploy → Vercel (Next.js)
     runs-on: ubuntu-latest
 
-    # Mirror the pattern from deploy-web.yml — set BOTH ORG and PROJECT
-    # so the Vercel CLI doesn't complain about missing project context.
     env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_WEB_PROJECT_ID }}
+      VERCEL_ORG_ID: team_UtKuX5197XYDwbUS3o7wmqXO
+      VERCEL_PROJECT_ID: prj_gqvQyMAT2JYTA6IH2EKucVWIj18S
 
     steps:
       - uses: actions/checkout@v4
 
-      # Create .vercel/project.json as a belt-and-suspenders link for CLI
-      - name: Link Vercel project (Next.js)
-        env:
-          PROJECT_ID: ${{ secrets.VERCEL_WEB_PROJECT_ID }}
-          ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-        run: |
-          mkdir -p Web/.vercel
-          echo "{\"projectId\":\"$PROJECT_ID\",\"orgId\":\"$ORG_ID\"}" > Web/.vercel/project.json
-
-      - name: Upsert PNJB_AI_CORE_URL
+      - name: Deploy to Vercel with AI env vars
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VALUE: ${{ secrets.PNJB_AI_CORE_URL }}
+          AI_CORE_URL: ${{ secrets.PNJB_AI_CORE_URL }}
+          AI_PLATFORM_KEY: ${{ secrets.PNJB_AI_PLATFORM_KEY }}
         working-directory: Web
         run: |
-          npx vercel@latest env rm PNJB_AI_CORE_URL production \
-            --token "$VERCEL_TOKEN" --yes 2>/dev/null || true
-          echo "$VALUE" | npx vercel@latest env add PNJB_AI_CORE_URL production \
-            --token "$VERCEL_TOKEN" --yes
-
-      - name: Upsert PNJB_AI_PLATFORM_KEY
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VALUE: ${{ secrets.PNJB_AI_PLATFORM_KEY }}
-        working-directory: Web
-        run: |
-          npx vercel@latest env rm PNJB_AI_PLATFORM_KEY production \
-            --token "$VERCEL_TOKEN" --yes 2>/dev/null || true
-          echo "$VALUE" | npx vercel@latest env add PNJB_AI_PLATFORM_KEY production \
-            --token "$VERCEL_TOKEN" --yes
-
-      - name: Deploy Next.js (production)
-        if: github.ref == 'refs/heads/Stable'
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-        working-directory: Web
-        run: npx vercel@latest --prod --token "$VERCEL_TOKEN" --yes
+          npx vercel@latest --prod \
+            --env PNJB_AI_CORE_URL="$AI_CORE_URL" \
+            --env PNJB_AI_PLATFORM_KEY="$AI_PLATFORM_KEY" \
+            --token "$VERCEL_TOKEN" \
+            --yes
