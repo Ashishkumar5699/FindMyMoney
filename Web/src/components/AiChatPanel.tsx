@@ -22,12 +22,83 @@ const TOOL_LABEL: Record<string, string> = {
   compare_period: 'Comparing periods',
 };
 
+const TOOL_ICON: Record<string, string> = {
+  get_expenses: '💸',
+  get_income: '💰',
+  get_monthly_summary: '📊',
+  get_spending_summary: '📊',
+  get_loans_and_emis: '🏦',
+  get_credit_cards: '💳',
+  get_investments: '📈',
+  get_financial_summary: '📋',
+  get_upcoming_commitments: '📅',
+  compare_period: '🔄',
+};
+
+function ThinkingDots() {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 0' }}>
+      {[0, 1, 2].map(i => (
+        <span key={i} style={{
+          width: 7, height: 7, borderRadius: '50%',
+          background: 'linear-gradient(135deg, #818cf8, #a78bfa)',
+          display: 'inline-block',
+          animation: 'dotBounce 1.2s ease-in-out infinite',
+          animationDelay: `${i * 0.18}s`,
+        }} />
+      ))}
+    </span>
+  );
+}
+
+function ToolStatusChip({ icon, label }: { icon: string; label: string }) {
+  return (
+    <div style={{
+      display: 'inline-flex', alignItems: 'center', gap: 8,
+      padding: '6px 14px 6px 10px',
+      background: 'linear-gradient(90deg, #1e1b4b 0%, #2d2a5e 50%, #1e1b4b 100%)',
+      backgroundSize: '200% 100%',
+      animation: 'shimmer 2s linear infinite',
+      borderRadius: 20,
+      border: '1px solid rgba(129,140,248,0.35)',
+      boxShadow: '0 0 12px rgba(99,102,241,0.2)',
+      alignSelf: 'flex-start',
+    }}>
+      <span style={{
+        width: 14, height: 14, borderRadius: '50%',
+        border: '2px solid #818cf8',
+        borderTopColor: 'transparent',
+        animation: 'spin 0.75s linear infinite',
+        display: 'inline-block',
+        flexShrink: 0,
+      }} />
+      <span style={{ fontSize: 13 }}>{icon}</span>
+      <span style={{ fontSize: 12, color: '#a5b4fc', fontWeight: 500, letterSpacing: '0.01em' }}>
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function SendSpinner() {
+  return (
+    <span style={{
+      width: 16, height: 16, borderRadius: '50%',
+      border: '2.5px solid rgba(255,255,255,0.25)',
+      borderTopColor: '#fff',
+      animation: 'spin 0.7s linear infinite',
+      display: 'inline-block',
+    }} />
+  );
+}
+
 export default function AiChatPanel() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [toolStatus, setToolStatus] = useState('');
+  const [toolIcon, setToolIcon] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -51,6 +122,7 @@ export default function AiChatPanel() {
     setInput('');
     setLoading(true);
     setToolStatus('');
+    setToolIcon('');
 
     const history = messages.map(m => ({ role: m.role, content: m.content }));
 
@@ -99,7 +171,8 @@ export default function AiChatPanel() {
             }
             if (data.tool) {
               const label = TOOL_LABEL[data.tool] ?? data.tool;
-              setToolStatus(label + '...');
+              setToolStatus(label);
+              setToolIcon(TOOL_ICON[data.tool] ?? '🔍');
               setMessages(prev => {
                 const next = [...prev];
                 const last = next[next.length - 1];
@@ -110,6 +183,7 @@ export default function AiChatPanel() {
               });
             } else if (data.token) {
               setToolStatus('');
+              setToolIcon('');
               setMessages(prev => {
                 const next = [...prev];
                 const last = next[next.length - 1];
@@ -133,6 +207,7 @@ export default function AiChatPanel() {
     } finally {
       setLoading(false);
       setToolStatus('');
+      setToolIcon('');
     }
   }, [input, loading, messages]);
 
@@ -223,7 +298,7 @@ export default function AiChatPanel() {
                   whiteSpace: 'pre-wrap', wordBreak: 'break-word',
                 }}>
                   {m.content || (m.role === 'assistant' && loading && i === messages.length - 1
-                    ? <span style={{ color: '#818cf8' }}>Thinking...</span>
+                    ? <ThinkingDots />
                     : '')}
                 </div>
               </div>
@@ -231,14 +306,7 @@ export default function AiChatPanel() {
 
             {/* Live tool status */}
             {toolStatus && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{
-                  display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
-                  background: '#818cf8',
-                  animation: 'pulse 1s infinite',
-                }} />
-                <span style={{ fontSize: 11, color: '#818cf8' }}>{toolStatus}</span>
-              </div>
+              <ToolStatusChip icon={toolIcon} label={toolStatus} />
             )}
 
             <div ref={bottomRef} />
@@ -273,16 +341,24 @@ export default function AiChatPanel() {
                 transition: 'background 0.2s',
               }}
             >
-              {loading ? '⏳' : '➤'}
+              {loading ? <SendSpinner /> : '➤'}
             </button>
           </div>
         </div>
       )}
 
       <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.4; }
+        @keyframes dotBounce {
+          0%, 60%, 100% { transform: translateY(0); opacity: 1; }
+          30% { transform: translateY(-6px); opacity: 0.7; }
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes shimmer {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
         }
       `}</style>
     </>
