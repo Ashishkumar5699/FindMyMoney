@@ -15,24 +15,24 @@ import { dotnetFetch } from '@/lib/dotnet';
 const TOOLS = [
   {
     name: 'get_expenses',
-    description: 'Get the user\'s expenses. Optionally filter by date range (YYYY-MM-DD) or category.',
+    description: 'Get the user\'s expenses. Filter by year, month (1-12), and/or category.',
     inputSchema: {
       type: 'object',
       properties: {
-        startDate: { type: 'string', description: 'Start date (YYYY-MM-DD)' },
-        endDate: { type: 'string', description: 'End date (YYYY-MM-DD)' },
-        category: { type: 'string', description: 'Filter by category name' },
+        year:     { type: 'integer', description: 'Year, e.g. 2026' },
+        month:    { type: 'integer', description: 'Month 1-12, e.g. 8 for August' },
+        category: { type: 'string',  description: 'Filter by category name (case-insensitive)' },
       },
     },
   },
   {
     name: 'get_income',
-    description: 'Get the user\'s income entries. Optionally filter by date range.',
+    description: 'Get the user\'s income entries. Filter by year and/or month (1-12).',
     inputSchema: {
       type: 'object',
       properties: {
-        startDate: { type: 'string', description: 'Start date (YYYY-MM-DD)' },
-        endDate: { type: 'string', description: 'End date (YYYY-MM-DD)' },
+        year:  { type: 'integer', description: 'Year, e.g. 2026' },
+        month: { type: 'integer', description: 'Month 1-12, e.g. 8 for August' },
       },
     },
   },
@@ -64,12 +64,12 @@ const TOOLS = [
   },
   {
     name: 'get_transfers',
-    description: 'Get the user\'s inter-account transfers.',
+    description: 'Get the user\'s inter-account transfers. Filter by year and/or month (1-12).',
     inputSchema: {
       type: 'object',
       properties: {
-        startDate: { type: 'string', description: 'Start date (YYYY-MM-DD)' },
-        endDate: { type: 'string', description: 'End date (YYYY-MM-DD)' },
+        year:  { type: 'integer', description: 'Year, e.g. 2026' },
+        month: { type: 'integer', description: 'Month 1-12, e.g. 8 for August' },
       },
     },
   },
@@ -79,13 +79,13 @@ const TOOLS = [
 
 async function callTool(
   name: string,
-  args: Record<string, string>,
+  args: Record<string, string | number>,
   userId: string,
   token: string,
 ): Promise<string> {
-  const qs = (params: Record<string, string | undefined>) => {
+  const qs = (params: Record<string, string | number | undefined>) => {
     const p = new URLSearchParams();
-    for (const [k, v] of Object.entries(params)) if (v) p.set(k, v);
+    for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== null && v !== '') p.set(k, String(v));
     const s = p.toString();
     return s ? `?${s}` : '';
   };
@@ -93,20 +93,18 @@ async function callTool(
   let path: string;
   switch (name) {
     case 'get_expenses':
-      path = `/api/findmymoney/expenses/${userId}${qs({ startDate: args.startDate, endDate: args.endDate, category: args.category })}`;
+      path = `/api/findmymoney/expenses/${userId}${qs({ year: args.year, month: args.month, category: args.category })}`;
       break;
     case 'get_income':
-      path = `/api/findmymoney/incomes/${userId}${qs({ startDate: args.startDate, endDate: args.endDate })}`;
+      path = `/api/findmymoney/incomes/${userId}${qs({ year: args.year, month: args.month })}`;
       break;
     case 'get_monthly_summary': {
-      // Derive startDate/endDate from month (YYYY-MM)
-      const [year, mon] = (args.month ?? '').split('-');
-      const startDate = `${year}-${mon}-01`;
-      const lastDay = new Date(+year, +mon, 0).getDate();
-      const endDate = `${year}-${mon}-${String(lastDay).padStart(2, '0')}`;
+      const [yearStr, monStr] = (String(args.month ?? '')).split('-');
+      const year = parseInt(yearStr, 10);
+      const month = parseInt(monStr, 10);
       const [expRes, incRes] = await Promise.all([
-        dotnetFetch(`/api/findmymoney/expenses/${userId}?startDate=${startDate}&endDate=${endDate}`, {}, token),
-        dotnetFetch(`/api/findmymoney/incomes/${userId}?startDate=${startDate}&endDate=${endDate}`, {}, token),
+        dotnetFetch(`/api/findmymoney/expenses/${userId}?year=${year}&month=${month}`, {}, token),
+        dotnetFetch(`/api/findmymoney/incomes/${userId}?year=${year}&month=${month}`, {}, token),
       ]);
       const [expenses, incomes] = await Promise.all([expRes.json(), incRes.json()]);
       const totalExpenses = Array.isArray(expenses)
@@ -117,6 +115,8 @@ async function callTool(
         : 0;
       return JSON.stringify({
         month: args.month,
+        year,
+        monthNumber: month,
         totalExpenses,
         totalIncome,
         net: totalIncome - totalExpenses,
@@ -136,7 +136,7 @@ async function callTool(
       path = `/api/findmymoney/investments/${userId}`;
       break;
     case 'get_transfers':
-      path = `/api/findmymoney/transfers/${userId}${qs({ startDate: args.startDate, endDate: args.endDate })}`;
+      path = `/api/findmymoney/transfers/${userId}${qs({ year: args.year, month: args.month })}`;
       break;
     default:
       throw new Error(`Unknown tool: ${name}`);
@@ -194,7 +194,7 @@ export async function POST(req: NextRequest) {
       return ok(id, { tools: TOOLS });
 
     case 'tools/call': {
-      const { name, arguments: args } = params as { name: string; arguments: Record<string, string> };
+      const { name, arguments: args } = params as { name: string; arguments: Record<string, string | number> };
       try {
         const text = await callTool(name, args ?? {}, userId, token);
         return ok(id, { content: [{ type: 'text', text }] });
