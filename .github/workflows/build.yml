@@ -1,0 +1,51 @@
+name: Build & Validate
+
+on:
+  pull_request:
+    branches: [Stable, PreProduction]
+  workflow_dispatch:
+
+jobs:
+  build-nextjs:
+    name: Next.js — build check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: Web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: Web
+
+      - name: Build
+        run: npm run build
+        working-directory: Web
+        env:
+          DOTNET_BASE_URL: https://build-placeholder.internal
+          PNJB_AI_CORE_URL: https://build-placeholder.internal
+          PNJB_AI_PLATFORM_KEY: placeholder
+
+  build-flutter:
+    name: Flutter — build check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.x'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+        working-directory: Flutter
+
+      - name: Build web
+        run: flutter build web --release
+        working-directory: Flutter
