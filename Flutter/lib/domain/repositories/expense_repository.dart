@@ -14,6 +14,7 @@ abstract class ExpenseRepository {
     String subCategory,
     String description,
     required DateTime date,
+    String? source,
   });
   Future<Expense> updateExpense(
     String userId,

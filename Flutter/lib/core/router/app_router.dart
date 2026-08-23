@@ -27,6 +27,7 @@ import '../../features/khata/screens/khata_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
 import '../../features/loans_emis/screens/loans_emis_screen.dart';
 import '../../features/ai_chat/screens/ai_chat_screen.dart';
+import '../../features/sms_review/screens/sms_review_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
@@ -190,6 +191,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/ai-chat',
             builder: (_, _) => const AiChatScreen(),
+          ),
+          GoRoute(
+            path: '/sms-review',
+            builder: (_, _) => const SmsReviewScreen(),
           ),
         ],
       ),

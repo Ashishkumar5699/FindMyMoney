@@ -8,7 +8,6 @@ import 'data/services/health_service.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Wake Azure backend — fire-and-forget, never blocks the UI
   HealthService(createDio()).bootPing();
 
   runApp(const ProviderScope(child: FindMyMoneyApp()));

@@ -8,6 +8,7 @@ class Expense {
   final DateTime date;
   final DateTime createdAt;
   final DateTime? updatedAt;
+  final String? source;
 
   const Expense({
     required this.id,
@@ -19,6 +20,7 @@ class Expense {
     required this.date,
     required this.createdAt,
     this.updatedAt,
+    this.source,
   });
 
   factory Expense.fromJson(Map<String, dynamic> json) => Expense(
@@ -33,6 +35,7 @@ class Expense {
         updatedAt: json['updatedAt'] != null
             ? DateTime.parse(json['updatedAt'] as String)
             : null,
+        source: json['source'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
@@ -45,6 +48,7 @@ class Expense {
         'date': date.toIso8601String(),
         'createdAt': createdAt.toIso8601String(),
         'updatedAt': updatedAt?.toIso8601String(),
+        'source': source,
       };
 
   Expense copyWith({
@@ -57,6 +61,7 @@ class Expense {
     DateTime? date,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? source,
   }) =>
       Expense(
         id: id ?? this.id,
@@ -68,5 +73,6 @@ class Expense {
         date: date ?? this.date,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
+        source: source ?? this.source,
       );
 }
