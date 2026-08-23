@@ -1,0 +1,85 @@
+name: Deploy → PreProduction
+
+on:
+  push:
+    branches: [PreProduction]
+  workflow_dispatch:
+
+jobs:
+  # ── Detect which apps changed ────────────────────────────────────────────────
+  detect:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      nextjs: ${{ steps.filter.outputs.nextjs }}
+      flutter: ${{ steps.filter.outputs.flutter }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            nextjs:
+              - 'Web/**'
+              - '.github/workflows/deploy-preproduction.yml'
+            flutter:
+              - 'Flutter/**'
+              - '.github/workflows/deploy-preproduction.yml'
+
+  # ── Next.js preview deploy ───────────────────────────────────────────────────
+  deploy-nextjs:
+    name: Next.js → Vercel (preview)
+    needs: detect
+    if: needs.detect.outputs.nextjs == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: team_UtKuX5197XYDwbUS3o7wmqXO
+      VERCEL_PROJECT_ID: prj_gqvQyMAT2JYTA6IH2EKucVWIj18S
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Vercel (preview)
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_WEB_TOKEN }}
+          AI_CORE_URL: ${{ secrets.PNJB_AI_CORE_URL }}
+          AI_PLATFORM_KEY: ${{ secrets.PNJB_AI_PLATFORM_KEY }}
+        run: |
+          npx vercel@latest \
+            --env PNJB_AI_CORE_URL="$AI_CORE_URL" \
+            --env PNJB_AI_PLATFORM_KEY="$AI_PLATFORM_KEY" \
+            --token "$VERCEL_TOKEN" \
+            --yes
+
+  # ── Flutter preview deploy ───────────────────────────────────────────────────
+  deploy-flutter:
+    name: Flutter → Vercel (preview)
+    needs: detect
+    if: needs.detect.outputs.flutter == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: team_UtKuX5197XYDwbUS3o7wmqXO
+      VERCEL_PROJECT_ID: prj_pZDOohEXxapqYp79fZhbNuBR86M1
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.x'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+        working-directory: Flutter
+
+      - name: Build web
+        run: flutter build web --release
+        working-directory: Flutter
+
+      - name: Copy vercel.json into build output
+        run: cp Flutter/vercel.json Flutter/build/web/vercel.json
+
+      - name: Deploy to Vercel (preview)
+        run: npx vercel --token ${{ secrets.VERCEL_TOKEN }} --yes
+        working-directory: Flutter/build/web
