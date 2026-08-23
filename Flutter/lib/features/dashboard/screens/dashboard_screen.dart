@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../../core/di/providers.dart';
+import '../../../core/services/sms_scanner_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../domain/models/expense.dart';
 import '../../../domain/models/income.dart';
@@ -9,6 +11,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../../expenses/providers/expense_provider.dart';
 import '../../incomes/providers/income_provider.dart';
 import '../../emis/providers/emi_provider.dart';
+import '../../sms_review/providers/sms_review_provider.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -21,20 +24,31 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadData());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+      _initSmsScanner();
+    });
   }
 
   void _loadData() {
     final user = ref.read(authProvider).user;
     if (user == null) return;
     final now = DateTime.now();
-    ref
-        .read(expenseProvider.notifier)
-        .load(user.id, year: now.year, month: now.month);
-    ref
-        .read(incomeProvider.notifier)
-        .load(user.id, year: now.year, month: now.month);
+    ref.read(expenseProvider.notifier).load(user.id, year: now.year, month: now.month);
+    ref.read(incomeProvider.notifier).load(user.id, year: now.year, month: now.month);
     ref.read(emiProvider.notifier).load(user.id);
+  }
+
+  Future<void> _initSmsScanner() async {
+    final dio = ref.read(dioProvider);
+    final granted = await SmsScannerService.instance.requestPermissions();
+    if (!granted) return;
+    await SmsScannerService.instance.startListening(dio, (_) {
+      // Refresh badge count when a new SMS transaction is detected
+      ref.invalidate(smsPendingCountProvider);
+    });
+    // Scan recent inbox on first open (fire-and-forget)
+    SmsScannerService.instance.scanInbox(dio);
   }
 
   @override
@@ -43,6 +57,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final expenseState = ref.watch(expenseProvider);
     final incomeState = ref.watch(incomeProvider);
     final emiState = ref.watch(emiProvider);
+    final pendingCount = ref.watch(smsPendingCountProvider).valueOrNull ?? 0;
 
     final totalExpense =
         expenseState.expenses.fold(0.0, (s, e) => s + e.amount);
@@ -73,6 +88,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ],
         ),
         actions: [
+          if (pendingCount > 0)
+            IconButton(
+              tooltip: '$pendingCount AI-detected transactions',
+              onPressed: () => context.push('/sms-review'),
+              icon: Badge(
+                label: Text('$pendingCount'),
+                child: const Icon(Icons.sms_outlined),
+              ),
+            ),
           IconButton(
             icon: const Icon(Icons.logout_outlined),
             onPressed: () async {

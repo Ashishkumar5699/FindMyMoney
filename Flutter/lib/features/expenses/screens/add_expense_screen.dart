@@ -24,7 +24,6 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
   String? _subCategory;
   DateTime _date = DateTime.now();
   bool _isLoading = false;
-
   bool get _isEdit => widget.expenseId != null;
 
   @override

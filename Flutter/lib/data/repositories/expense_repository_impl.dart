@@ -36,17 +36,17 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
     String subCategory = '',
     String description = '',
     required DateTime date,
+    String? source,
   }) async {
-    final response = await _dio.post(
-      ApiConstants.expenses,
-      data: {
-        'amount': amount,
-        'category': category,
-        'subCategory': subCategory,
-        'description': description,
-        'date': date.toUtc().toIso8601String(),
-      },
-    );
+    final data = <String, dynamic>{
+      'amount': amount,
+      'category': category,
+      'subCategory': subCategory,
+      'description': description,
+      'date': date.toUtc().toIso8601String(),
+    };
+    if (source != null) data['source'] = source;
+    final response = await _dio.post(ApiConstants.expenses, data: data);
     return Expense.fromJson(unwrap(response) as Map<String, dynamic>);
   }
 

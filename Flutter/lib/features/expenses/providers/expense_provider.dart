@@ -54,6 +54,7 @@ class ExpenseNotifier extends StateNotifier<ExpenseState> {
     String subCategory = '',
     String description = '',
     required DateTime date,
+    String? source,
   }) async {
     if (_userId == null) return false;
     try {
@@ -66,6 +67,7 @@ class ExpenseNotifier extends StateNotifier<ExpenseState> {
             subCategory: subCategory,
             description: description,
             date: date,
+            source: source,
           );
       state = state.copyWith(
         expenses: [expense, ...state.expenses],
