@@ -92,9 +92,23 @@ async function callTool(
 
   let path: string;
   switch (name) {
-    case 'get_expenses':
-      path = `/api/findmymoney/expenses/${userId}${qs({ year: args.year, month: args.month, category: args.category })}`;
-      break;
+    case 'get_expenses': {
+      // Fetch by year/month from .NET; filter category client-side using startsWith
+      // because the DB stores "BKC / Beer" not just "BKC"
+      const expRes = await dotnetFetch(
+        `/api/findmymoney/expenses/${userId}${qs({ year: args.year, month: args.month })}`,
+        {},
+        token,
+      );
+      let expenses = await expRes.json();
+      if (args.category && Array.isArray(expenses)) {
+        const cat = String(args.category).toLowerCase();
+        expenses = expenses.filter((e: { category?: string }) =>
+          (e.category ?? '').toLowerCase().startsWith(cat),
+        );
+      }
+      return JSON.stringify(expenses);
+    }
     case 'get_income':
       path = `/api/findmymoney/incomes/${userId}${qs({ year: args.year, month: args.month })}`;
       break;
@@ -113,6 +127,14 @@ async function callTool(
       const totalIncome = Array.isArray(incomes)
         ? incomes.reduce((s: number, i: { amount?: number }) => s + (i.amount ?? 0), 0)
         : 0;
+      // Aggregate expenses by parent category (stored as "Parent / Sub" or just "Parent")
+      const byCategory: Record<string, number> = {};
+      if (Array.isArray(expenses)) {
+        for (const e of expenses as { category?: string; amount?: number }[]) {
+          const parent = (e.category ?? 'Other').split(' / ')[0].trim();
+          byCategory[parent] = (byCategory[parent] ?? 0) + (e.amount ?? 0);
+        }
+      }
       return JSON.stringify({
         month: args.month,
         year,
@@ -122,6 +144,7 @@ async function callTool(
         net: totalIncome - totalExpenses,
         expenseCount: Array.isArray(expenses) ? expenses.length : 0,
         incomeCount: Array.isArray(incomes) ? incomes.length : 0,
+        expensesByCategory: byCategory,
         expenses,
         incomes,
       });
