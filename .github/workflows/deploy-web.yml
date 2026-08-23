@@ -63,7 +63,7 @@ jobs:
       - name: Deploy to Vercel (production)
         if: github.ref == 'refs/heads/Stable'
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_WEB_TOKEN }}
           AI_CORE_URL: ${{ secrets.PNJB_AI_CORE_URL }}
           AI_PLATFORM_KEY: ${{ secrets.PNJB_AI_PLATFORM_KEY }}
         run: |
@@ -76,7 +76,7 @@ jobs:
       - name: Deploy to Vercel (preview / dev)
         if: github.ref == 'refs/heads/PreProduction'
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_WEB_TOKEN }}
           AI_CORE_URL: ${{ secrets.PNJB_AI_CORE_URL }}
           AI_PLATFORM_KEY: ${{ secrets.PNJB_AI_PLATFORM_KEY }}
         run: |
