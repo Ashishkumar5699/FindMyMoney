@@ -38,13 +38,14 @@ const TOOLS = [
   },
   {
     name: 'get_monthly_summary',
-    description: 'Get a monthly spending and income summary. Pass month as YYYY-MM.',
+    description: 'Get total spending, income, and category breakdown for a month.',
     inputSchema: {
       type: 'object',
       properties: {
-        month: { type: 'string', description: 'Month in YYYY-MM format, e.g. 2026-08' },
+        year:  { type: 'integer', description: 'Year, e.g. 2026' },
+        month: { type: 'integer', description: 'Month 1-12, e.g. 8 for August' },
       },
-      required: ['month'],
+      required: ['year', 'month'],
     },
   },
   {
@@ -75,6 +76,18 @@ const TOOLS = [
   },
 ];
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+// .NET always wraps: { data: [...], hasErrors: false, message: "Success" }
+// Extract the inner array so all Array.isArray checks work correctly.
+function unwrapList(raw: unknown): unknown[] {
+  if (Array.isArray(raw)) return raw;
+  if (raw && typeof raw === 'object' && Array.isArray((raw as Record<string, unknown>).data)) {
+    return (raw as Record<string, unknown>).data as unknown[];
+  }
+  return [];
+}
+
 // ── Tool executor ─────────────────────────────────────────────────────────────
 
 async function callTool(
@@ -93,18 +106,17 @@ async function callTool(
   let path: string;
   switch (name) {
     case 'get_expenses': {
-      // Fetch by year/month from .NET; filter category client-side using startsWith
-      // because the DB stores "BKC / Beer" not just "BKC"
+      // Fetch by year/month; filter category client-side (DB stores "BKC / Beer", not "BKC")
       const expRes = await dotnetFetch(
         `/api/findmymoney/expenses/${userId}${qs({ year: args.year, month: args.month })}`,
         {},
         token,
       );
-      let expenses = await expRes.json();
-      if (args.category && Array.isArray(expenses)) {
+      let expenses = unwrapList(await expRes.json());
+      if (args.category) {
         const cat = String(args.category).toLowerCase();
-        expenses = expenses.filter((e: { category?: string }) =>
-          (e.category ?? '').toLowerCase().startsWith(cat),
+        expenses = expenses.filter((e) =>
+          ((e as { category?: string }).category ?? '').toLowerCase().startsWith(cat),
         );
       }
       return JSON.stringify(expenses);
@@ -113,40 +125,39 @@ async function callTool(
       path = `/api/findmymoney/incomes/${userId}${qs({ year: args.year, month: args.month })}`;
       break;
     case 'get_monthly_summary': {
-      const [yearStr, monStr] = (String(args.month ?? '')).split('-');
-      const year = parseInt(yearStr, 10);
-      const month = parseInt(monStr, 10);
+      // Accepts year+month integers (consistent with get_expenses schema)
+      // Also handles legacy YYYY-MM string in case model sends it
+      let year: number, month: number;
+      if (args.year && args.month) {
+        year = Number(args.year);
+        month = Number(args.month);
+      } else {
+        const [yearStr, monStr] = (String(args.month ?? '')).split('-');
+        year = parseInt(yearStr, 10);
+        month = parseInt(monStr, 10);
+      }
       const [expRes, incRes] = await Promise.all([
         dotnetFetch(`/api/findmymoney/expenses/${userId}?year=${year}&month=${month}`, {}, token),
         dotnetFetch(`/api/findmymoney/incomes/${userId}?year=${year}&month=${month}`, {}, token),
       ]);
-      const [expenses, incomes] = await Promise.all([expRes.json(), incRes.json()]);
-      const totalExpenses = Array.isArray(expenses)
-        ? expenses.reduce((s: number, e: { amount?: number }) => s + (e.amount ?? 0), 0)
-        : 0;
-      const totalIncome = Array.isArray(incomes)
-        ? incomes.reduce((s: number, i: { amount?: number }) => s + (i.amount ?? 0), 0)
-        : 0;
-      // Aggregate expenses by parent category (stored as "Parent / Sub" or just "Parent")
+      const expenses = unwrapList(await expRes.json()) as { category?: string; amount?: number }[];
+      const incomes = unwrapList(await incRes.json()) as { amount?: number }[];
+      const totalExpenses = expenses.reduce((s, e) => s + (e.amount ?? 0), 0);
+      const totalIncome = incomes.reduce((s, i) => s + (i.amount ?? 0), 0);
       const byCategory: Record<string, number> = {};
-      if (Array.isArray(expenses)) {
-        for (const e of expenses as { category?: string; amount?: number }[]) {
-          const parent = (e.category ?? 'Other').split(' / ')[0].trim();
-          byCategory[parent] = (byCategory[parent] ?? 0) + (e.amount ?? 0);
-        }
+      for (const e of expenses) {
+        const parent = (e.category ?? 'Other').split(' / ')[0].trim();
+        byCategory[parent] = (byCategory[parent] ?? 0) + (e.amount ?? 0);
       }
       return JSON.stringify({
-        month: args.month,
         year,
-        monthNumber: month,
+        month,
         totalExpenses,
         totalIncome,
         net: totalIncome - totalExpenses,
-        expenseCount: Array.isArray(expenses) ? expenses.length : 0,
-        incomeCount: Array.isArray(incomes) ? incomes.length : 0,
+        expenseCount: expenses.length,
+        incomeCount: incomes.length,
         expensesByCategory: byCategory,
-        expenses,
-        incomes,
       });
     }
     case 'get_loans_and_emis':
@@ -166,8 +177,7 @@ async function callTool(
   }
 
   const res = await dotnetFetch(path, {}, token);
-  const data = await res.json();
-  return JSON.stringify(data);
+  return JSON.stringify(unwrapList(await res.json()));
 }
 
 // ── JSON-RPC 2.0 helpers ──────────────────────────────────────────────────────
