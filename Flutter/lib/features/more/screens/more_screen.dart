@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../drinkup/drinkup_module.dart';
 
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
@@ -50,6 +51,14 @@ class MoreScreen extends StatelessWidget {
         color: const Color(0xFF6C63FF),
         route: '/ai-chat',
       ),
+      _MoreItem(
+        label: 'BKC',
+        icon: Icons.local_bar_outlined,
+        color: const Color(0xFFFF6B35),
+        onTap: (ctx) => Navigator.of(ctx).push(
+          MaterialPageRoute(builder: (_) => const BkcApp()),
+        ),
+      ),
     ];
 
     return Scaffold(
@@ -73,13 +82,15 @@ class _MoreItem {
   final String label;
   final IconData icon;
   final Color color;
-  final String route;
+  final String? route;
+  final void Function(BuildContext)? onTap;
 
   const _MoreItem({
     required this.label,
     required this.icon,
     required this.color,
-    required this.route,
+    this.route,
+    this.onTap,
   });
 }
 
@@ -91,7 +102,13 @@ class _MoreCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.go(item.route),
+      onTap: () {
+        if (item.onTap != null) {
+          item.onTap!(context);
+        } else if (item.route != null) {
+          context.go(item.route!);
+        }
+      },
       child: Container(
         decoration: BoxDecoration(
           color: AppTheme.card,
