@@ -40,6 +40,35 @@ dependencies:
   # Local notifications
   flutter_local_notifications: ^18.0.1
 
+  # ── DrinkUp module dependencies ───────────────────────────────────────────────
+  # State management (DrinkUp uses Provider; FMM uses Riverpod — both coexist)
+  provider: ^6.1.2
+
+  # Biometric unlock (Face ID / fingerprint for DrinkUp MPIN)
+  local_auth: ^2.3.0
+
+  # Map + location (DrinkUp friend-location sharing)
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+  geolocator: ^13.0.2
+
+  # Image picking + compression (DrinkUp profile photos)
+  image_picker: ^1.1.2
+  flutter_image_compress: ^2.3.0
+
+  # MPIN input UI
+  pin_code_fields: ^8.0.1
+
+  # Timezone (DrinkUp scheduled notifications)
+  timezone: ^0.9.4
+
+  # URL launcher (DrinkUp phone/link handling)
+  url_launcher: ^6.3.1
+
+  # Firebase (DrinkUp FCM push notifications — requires google-services.json)
+  firebase_core: ^3.13.1
+  firebase_messaging: ^15.2.5
+
   # Peer loans: QR code display + scanning
   qr_flutter: ^4.1.0
   mobile_scanner: ^6.0.0
@@ -54,3 +83,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/drinkup/images/
+    - assets/drinkup/icons/

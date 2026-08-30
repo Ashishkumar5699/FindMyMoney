@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "663140277742",
+    "project_id": "maui-mobile-application",
+    "storage_bucket": "maui-mobile-application.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:663140277742:android:842651168411ec8bb142ff",
+        "android_client_info": {
+          "package_name": "com.sonar.findmymoney"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCotcwJ3QBikAcwuhGEidGfPo9VBbjckXs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
