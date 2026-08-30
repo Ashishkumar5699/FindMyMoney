@@ -28,6 +28,14 @@ import '../../features/settings/screens/settings_screen.dart';
 import '../../features/loans_emis/screens/loans_emis_screen.dart';
 import '../../features/ai_chat/screens/ai_chat_screen.dart';
 import '../../features/sms_review/screens/sms_review_screen.dart';
+import '../../features/peer_loans/models/peer_loan.dart';
+import '../../features/peer_loans/screens/peer_loans_screen.dart';
+import '../../features/peer_loans/screens/create_peer_loan_screen.dart';
+import '../../features/peer_loans/screens/show_token_screen.dart';
+import '../../features/peer_loans/screens/show_repayment_token_screen.dart';
+import '../../features/peer_loans/screens/verify_loan_screen.dart';
+import '../../features/peer_loans/screens/confirm_loan_screen.dart';
+import '../../features/peer_loans/screens/peer_loan_detail_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
@@ -195,6 +203,45 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/sms-review',
             builder: (_, _) => const SmsReviewScreen(),
+          ),
+          GoRoute(
+            path: '/peer-loans',
+            builder: (_, _) => const PeerLoansScreen(),
+            routes: [
+              GoRoute(
+                path: 'create',
+                builder: (_, _) => const CreatePeerLoanScreen(),
+              ),
+              GoRoute(
+                path: 'show-token',
+                builder: (_, state) =>
+                    ShowTokenScreen(loan: state.extra as PeerLoan),
+              ),
+              GoRoute(
+                path: 'show-repayment-token',
+                builder: (_, state) => ShowRepaymentTokenScreen(
+                    repayment: state.extra as PeerLoanRepayment),
+              ),
+              GoRoute(
+                path: 'verify',
+                builder: (_, _) => const VerifyLoanScreen(),
+              ),
+              GoRoute(
+                path: 'confirm',
+                builder: (_, state) {
+                  final args = state.extra as Map<String, dynamic>;
+                  return ConfirmLoanScreen(
+                    token: args['token'] as String,
+                    preview: args['preview'] as PeerLoanPreview,
+                  );
+                },
+              ),
+              GoRoute(
+                path: ':id',
+                builder: (_, state) =>
+                    PeerLoanDetailScreen(loan: state.extra as PeerLoan),
+              ),
+            ],
           ),
         ],
       ),

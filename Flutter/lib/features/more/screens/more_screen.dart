@@ -28,6 +28,12 @@ class MoreScreen extends StatelessWidget {
         route: '/transfers',
       ),
       _MoreItem(
+        label: 'Peer Loans',
+        icon: Icons.handshake_outlined,
+        color: const Color(0xFF9C27B0),
+        route: '/peer-loans',
+      ),
+      _MoreItem(
         label: 'Khata',
         icon: Icons.menu_book_outlined,
         color: const Color(0xFFE67E22),
