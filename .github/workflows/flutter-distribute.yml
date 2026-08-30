@@ -27,14 +27,14 @@ jobs:
         run: flutter pub get
         working-directory: Flutter
 
-      # telephony 0.2.0 is discontinued and missing 'namespace' required by AGP 8+.
+      # telephony 0.2.0 is discontinued — missing namespace (AGP 8+) and
+      # kotlinOptions jvmTarget (must match compileOptions Java target = 11).
       # Patch its build.gradle directly in the pub cache before Gradle evaluates it.
-      - name: Patch telephony namespace (legacy package fix)
+      - name: Patch telephony for AGP 8+ compatibility
         run: |
           BUILD=$(find ~/.pub-cache -name "build.gradle" -path "*/telephony-0.2.0/android/*" 2>/dev/null | head -1)
           if [ -n "$BUILD" ]; then
-            echo "" >> "$BUILD"
-            echo "android { namespace 'com.shounakmulay.telephony' }" >> "$BUILD"
+            printf "\nandroid { namespace 'com.shounakmulay.telephony'; kotlinOptions { jvmTarget = '11' } }\n" >> "$BUILD"
             echo "Patched $BUILD"
           else
             echo "telephony build.gradle not found — skipping patch"
