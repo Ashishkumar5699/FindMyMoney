@@ -35,8 +35,10 @@ tasks.register<Delete>("clean") {
 
 // Patch legacy Flutter plugins that don't declare namespace (required by AGP 8+).
 // telephony 0.2.0 (discontinued) hits this — its Android build.gradle has no namespace field.
-subprojects {
-    afterEvaluate {
+// Must use gradle.projectsEvaluated (not subprojects.afterEvaluate) to avoid
+// "Cannot run afterEvaluate when project is already evaluated" in newer Gradle.
+gradle.projectsEvaluated {
+    allprojects {
         val android = extensions.findByName("android")
         if (android is com.android.build.gradle.LibraryExtension && android.namespace == null) {
             android.namespace = group.toString().ifBlank {
