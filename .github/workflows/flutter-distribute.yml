@@ -27,6 +27,19 @@ jobs:
         run: flutter pub get
         working-directory: Flutter
 
+      # telephony 0.2.0 is discontinued and missing 'namespace' required by AGP 8+.
+      # Patch its build.gradle directly in the pub cache before Gradle evaluates it.
+      - name: Patch telephony namespace (legacy package fix)
+        run: |
+          BUILD=$(find ~/.pub-cache -name "build.gradle" -path "*/telephony-0.2.0/android/*" 2>/dev/null | head -1)
+          if [ -n "$BUILD" ]; then
+            echo "" >> "$BUILD"
+            echo "android { namespace 'com.shounakmulay.telephony' }" >> "$BUILD"
+            echo "Patched $BUILD"
+          else
+            echo "telephony build.gradle not found — skipping patch"
+          fi
+
       # Debug-signed APK — fine for App Distribution; swap for release keystore when going to Play Store
       - name: Build APK
         run: flutter build apk --debug
