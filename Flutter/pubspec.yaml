@@ -40,6 +40,13 @@ dependencies:
   # Local notifications
   flutter_local_notifications: ^18.0.1
 
+  # Peer loans: QR code display + scanning
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^6.0.0
+
+  # Peer loans: share 6-digit code via WhatsApp/SMS
+  share_plus: ^10.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
