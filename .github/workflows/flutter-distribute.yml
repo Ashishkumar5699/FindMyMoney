@@ -23,6 +23,11 @@ jobs:
       - name: Write google-services.json
         run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > Flutter/android/app/google-services.json
 
+      # Inject release keystore from secret (stored as base64)
+      - name: Write keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > Flutter/android/app/findmymoney.jks
+
       - name: Install dependencies
         run: flutter pub get
         working-directory: Flutter
@@ -40,10 +45,14 @@ jobs:
             echo "telephony build.gradle not found — skipping patch"
           fi
 
-      # Debug-signed APK — fine for App Distribution; swap for release keystore when going to Play Store
       - name: Build APK
-        run: flutter build apk --debug
+        run: flutter build apk --release
         working-directory: Flutter
+        env:
+          KEYSTORE_PATH: findmymoney.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
       - name: Upload to Firebase App Distribution
         uses: wzieba/Firebase-Distribution-Github-Action@v1
@@ -55,4 +64,4 @@ jobs:
             Branch: ${{ github.ref_name }}
             Commit: ${{ github.sha }}
             Message: ${{ github.event.head_commit.message }}
-          file: Flutter/build/app/outputs/flutter-apk/app-debug.apk
+          file: Flutter/build/app/outputs/flutter-apk/app-release.apk
