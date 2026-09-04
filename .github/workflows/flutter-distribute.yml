@@ -3,6 +3,9 @@ name: Flutter — Firebase App Distribution
 on:
   push:
     branches: [Stable]
+    paths:
+      - 'Flutter/**'
+      - '.github/workflows/flutter-distribute.yml'
   workflow_dispatch:
 
 jobs:

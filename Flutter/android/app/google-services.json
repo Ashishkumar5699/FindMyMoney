@@ -7,9 +7,28 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:663140277742:android:842651168411ec8bb142ff",
+        "mobilesdk_app_id": "1:663140277742:android:abaf620a069230d7b142ff",
         "android_client_info": {
-          "package_name": "com.sonar.findmymoney"
+          "package_name": "com.companyname.Sonar.inventory"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCotcwJ3QBikAcwuhGEidGfPo9VBbjckXs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:663140277742:android:586b53bbd7697df8b142ff",
+        "android_client_info": {
+          "package_name": "com.pnjb.findmymoney"
         }
       },
       "oauth_client": [],
