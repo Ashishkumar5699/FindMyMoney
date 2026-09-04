@@ -3,6 +3,9 @@ name: Flutter — Firebase App Distribution
 on:
   push:
     branches: [Stable]
+    paths:
+      - 'Flutter/**'
+      - '.github/workflows/flutter-distribute.yml'
   workflow_dispatch:
 
 jobs:
@@ -46,7 +49,11 @@ jobs:
           fi
 
       - name: Build APK
-        run: flutter build apk --release
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1)
+          flutter build apk --release \
+            --build-name="$VERSION" \
+            --build-number=${{ github.run_number }}
         working-directory: Flutter
         env:
           KEYSTORE_PATH: findmymoney.jks
@@ -62,6 +69,7 @@ jobs:
           testers: ${{ secrets.FIREBASE_TESTERS }}
           releaseNotes: |
             Branch: ${{ github.ref_name }}
+            Build: ${{ github.run_number }}
             Commit: ${{ github.sha }}
             Message: ${{ github.event.head_commit.message }}
           file: Flutter/build/app/outputs/flutter-apk/app-release.apk
