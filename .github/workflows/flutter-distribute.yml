@@ -34,7 +34,7 @@ jobs:
         run: |
           BUILD=$(find ~/.pub-cache -name "build.gradle" -path "*/telephony-0.2.0/android/*" 2>/dev/null | head -1)
           if [ -n "$BUILD" ]; then
-            printf "\nandroid { namespace 'com.shounakmulay.telephony'; kotlinOptions { jvmTarget = '11' } }\n" >> "$BUILD"
+            printf "\nandroid { namespace 'com.shounakmulay.telephony'; compileSdkVersion 35; kotlinOptions { jvmTarget = '11' } }\n" >> "$BUILD"
             echo "Patched $BUILD"
           else
             echo "telephony build.gradle not found — skipping patch"
