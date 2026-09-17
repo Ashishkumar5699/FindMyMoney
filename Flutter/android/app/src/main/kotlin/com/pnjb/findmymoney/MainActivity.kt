@@ -1,4 +1,4 @@
-package com.sonar.findmymoney
+package com.pnjb.findmymoney
 
 import io.flutter.embedding.android.FlutterActivity
 
