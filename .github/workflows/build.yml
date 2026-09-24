@@ -3,11 +3,69 @@ name: Build & Validate
 on:
   pull_request:
     branches: [Stable, PreProduction]
-  workflow_dispatch:
 
 jobs:
-  build-nextjs:
+  changes:
+    name: Detect changed paths
+    runs-on: ubuntu-latest
+    outputs:
+      flutter: ${{ steps.filter.outputs.flutter }}
+      web: ${{ steps.filter.outputs.web }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            flutter:
+              - 'Flutter/**'
+            web:
+              - 'Web/**'
+
+  build-flutter:
+    name: Flutter — build APK
+    needs: changes
+    if: needs.changes.outputs.flutter == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.x'
+          channel: stable
+          cache: true
+
+      - name: Write google-services.json
+        run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > Flutter/android/app/google-services.json
+
+      - name: Install dependencies
+        run: flutter pub get
+        working-directory: Flutter
+
+      - name: Patch telephony for AGP 8+ compatibility
+        run: |
+          BUILD=$(find ~/.pub-cache -name "build.gradle" -path "*/telephony-0.2.0/android/*" 2>/dev/null | head -1)
+          if [ -n "$BUILD" ]; then
+            printf "\nandroid { namespace 'com.shounakmulay.telephony'; compileSdkVersion 35; kotlinOptions { jvmTarget = '11' } }\n" >> "$BUILD"
+          fi
+
+      - name: Write keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > Flutter/android/app/findmymoney.jks
+
+      - name: Build APK
+        run: flutter build apk --release --build-number=${{ github.run_number }}
+        working-directory: Flutter
+        env:
+          KEYSTORE_PATH: findmymoney.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+  build-web:
     name: Next.js — build check
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,23 +87,3 @@ jobs:
           DOTNET_BASE_URL: https://build-placeholder.internal
           PNJB_AI_CORE_URL: https://build-placeholder.internal
           PNJB_AI_PLATFORM_KEY: placeholder
-
-  build-flutter:
-    name: Flutter — build check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.44.x'
-          channel: stable
-          cache: true
-
-      - name: Install dependencies
-        run: flutter pub get
-        working-directory: Flutter
-
-      - name: Build web
-        run: flutter build web --release
-        working-directory: Flutter
