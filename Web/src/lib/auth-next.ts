@@ -11,15 +11,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   secret: process.env.AUTH_SECRET,
   pages: { signIn: '/login' },
   callbacks: {
-    async jwt({ token, account, profile }) {
-      if (account?.provider === 'google' && profile?.sub) {
-        token.googleId = profile.sub;
+    async jwt({ token, account }) {
+      // Keep Google's signed ID token in the encrypted session cookie only (never in the client session):
+      // /api/auth/google-finalize sends it to .NET, which verifies it before signing the user in.
+      if (account?.provider === 'google' && account.id_token) {
+        token.googleIdToken = account.id_token;
       }
       return token;
-    },
-    session({ session, token }) {
-      if (token.googleId) (session as unknown as Record<string, unknown>).googleId = token.googleId;
-      return session;
     },
   },
 });
