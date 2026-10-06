@@ -1,25 +1,22 @@
-import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth-next';
+import { NextRequest, NextResponse } from 'next/server';
+import { getToken } from 'next-auth/jwt';
 import { dotnetFetch } from '@/lib/dotnet';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 
-export async function GET() {
-  const session = await auth();
-  const googleId = (session as Record<string, unknown> | null)?.googleId as string | undefined;
+export async function GET(req: NextRequest) {
+  // Read the ID token straight from the encrypted session cookie; .NET verifies it with Google.
+  const token = await getToken({ req, secret: process.env.AUTH_SECRET, secureCookie: APP_URL.startsWith('https://') });
+  const idToken = token?.googleIdToken as string | undefined;
 
-  if (!session?.user?.email || !googleId) {
+  if (!idToken) {
     return NextResponse.redirect(new URL('/login?error=google_failed', APP_URL));
   }
 
   try {
     const res = await dotnetFetch('/api/findmymoney/auth/google', {
       method: 'POST',
-      body: JSON.stringify({
-        googleId,
-        email: session.user.email,
-        name: session.user.name ?? session.user.email,
-      }),
+      body: JSON.stringify({ idToken }),
     });
 
     if (!res.ok) {
@@ -27,15 +24,15 @@ export async function GET() {
     }
 
     const data = await res.json();
-    const token = data?.token ?? data?.data?.token;
-    const username = data?.username ?? data?.userName ?? data?.data?.username ?? session.user.email;
+    const appToken = data?.token ?? data?.data?.token;
+    const username = data?.username ?? data?.userName ?? data?.data?.username ?? data?.email ?? data?.data?.email;
 
-    if (!token) {
+    if (!appToken) {
       return NextResponse.redirect(new URL('/login?error=no_token', APP_URL));
     }
 
     const url = new URL('/auth/google-complete', APP_URL);
-    url.searchParams.set('t', token);
+    url.searchParams.set('t', appToken);
     url.searchParams.set('u', username);
     return NextResponse.redirect(url);
   } catch {
