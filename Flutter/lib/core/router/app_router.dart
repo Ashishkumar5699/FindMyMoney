@@ -36,6 +36,7 @@ import '../../features/peer_loans/screens/show_repayment_token_screen.dart';
 import '../../features/peer_loans/screens/verify_loan_screen.dart';
 import '../../features/peer_loans/screens/confirm_loan_screen.dart';
 import '../../features/peer_loans/screens/peer_loan_detail_screen.dart';
+import '../../features/card_offers/screens/card_offers_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
@@ -244,6 +245,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: '/card-offers',
+        builder: (_, _) => const CardOffersScreen(),
       ),
     ],
   );
