@@ -18,5 +18,6 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ paym
   const { paymentSourceId } = await params;
   const body = await req.text();
   const upstream = await dotnetFetch(`/api/findmymoney/cardoffers/benefits/${paymentSourceId}`, { method: 'PUT', body }, extractBearer(req));
-  return NextResponse.json(await upstream.json(), { status: upstream.status });
+  const text = await upstream.text();
+  return new NextResponse(text || null, { status: upstream.status });
 }

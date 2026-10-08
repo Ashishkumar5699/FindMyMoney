@@ -9,5 +9,11 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const qs = searchParams.toString() ? `?${searchParams.toString()}` : '';
   const upstream = await dotnetFetch(`/api/findmymoney/cardoffers/suggest${qs}`, { method: 'GET' }, extractBearer(req));
-  return NextResponse.json(await upstream.json(), { status: upstream.status });
+  const text = await upstream.text();
+  if (!text) return new NextResponse(null, { status: upstream.status });
+  try {
+    return NextResponse.json(JSON.parse(text), { status: upstream.status });
+  } catch {
+    return new NextResponse(text, { status: upstream.status });
+  }
 }
