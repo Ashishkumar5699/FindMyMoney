@@ -8,15 +8,6 @@ export async function GET(req: NextRequest) {
   }
   const { searchParams } = new URL(req.url);
   const qs = searchParams.toString() ? `?${searchParams.toString()}` : '';
-  const upstream = await dotnetFetch(`/api/findmymoney/incomes${qs}`, { method: 'GET' }, extractBearer(req));
-  return NextResponse.json(await upstream.json(), { status: upstream.status });
-}
-
-export async function POST(req: NextRequest) {
-  try { await verifyToken(req); } catch {
-    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-  }
-  const body = await req.text();
-  const upstream = await dotnetFetch(`/api/findmymoney/incomes`, { method: 'POST', body }, extractBearer(req));
+  const upstream = await dotnetFetch(`/api/findmymoney/cardoffers/suggest${qs}`, { method: 'GET' }, extractBearer(req));
   return NextResponse.json(await upstream.json(), { status: upstream.status });
 }

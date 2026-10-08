@@ -47,7 +47,7 @@ class CardOfferNotifier extends StateNotifier<CardOfferState> {
   Future<void> load(String userId) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final res = await _dio.get('${ApiConstants.cardOffers}/$userId');
+      final res = await _dio.get(ApiConstants.cardOffers);
       final offers = (res.data as List).map((o) => CardOffer.fromJson(o)).toList();
       state = state.copyWith(offers: offers, isLoading: false);
     } catch (e) {
@@ -57,7 +57,7 @@ class CardOfferNotifier extends StateNotifier<CardOfferState> {
 
   Future<void> addOffer(String userId, Map<String, dynamic> data) async {
     try {
-      await _dio.post('${ApiConstants.cardOffers}/$userId', data: data);
+      await _dio.post(ApiConstants.cardOffers, data: data);
       await load(userId);
     } catch (e) {
       state = state.copyWith(error: e.toString());
@@ -66,7 +66,7 @@ class CardOfferNotifier extends StateNotifier<CardOfferState> {
 
   Future<void> deleteOffer(String userId, String offerId) async {
     try {
-      await _dio.delete('${ApiConstants.cardOffers}/$userId/$offerId');
+      await _dio.delete(ApiConstants.cardOfferDelete(offerId));
       state = state.copyWith(
           offers: state.offers.where((o) => o.id != offerId).toList());
     } catch (e) {
@@ -77,8 +77,7 @@ class CardOfferNotifier extends StateNotifier<CardOfferState> {
   Future<void> suggestCard(String userId, String category) async {
     state = state.copyWith(isSuggesting: true, clearSuggestion: true, clearError: true);
     try {
-      final res = await _dio.get(
-          '${ApiConstants.cardOffers}/$userId/suggest?category=${Uri.encodeComponent(category)}');
+      final res = await _dio.get(ApiConstants.cardSuggest(category));
       state = state.copyWith(
           suggestion: CardSuggestion.fromJson(res.data), isSuggesting: false);
     } on DioException catch (e) {
