@@ -16,5 +16,11 @@ export async function POST(req: NextRequest) {
   }
   const body = await req.text();
   const upstream = await dotnetFetch(`/api/findmymoney/cardoffers`, { method: 'POST', body }, extractBearer(req));
-  return NextResponse.json(await upstream.json(), { status: upstream.status });
+  const text = await upstream.text();
+  if (!text) return new NextResponse(null, { status: upstream.status });
+  try {
+    return NextResponse.json(JSON.parse(text), { status: upstream.status });
+  } catch {
+    return new NextResponse(text, { status: upstream.status });
+  }
 }
