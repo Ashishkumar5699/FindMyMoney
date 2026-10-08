@@ -44,4 +44,9 @@ class ApiConstants {
   static String khataTransactions(String contactId) => '/api/khata/$contactId/transactions';
   static String khataTransaction(String contactId, String txnId) => '/api/khata/$contactId/transactions/$txnId';
   static String khataSettle(String contactId) => '/api/khata/$contactId/settle';
+
+  static const String cardOffers = '/api/card-offers';
+  static String cardOfferDelete(String id) => '/api/card-offers/$id';
+  static String cardBenefits(String paymentSourceId) => '/api/card-offers/benefits/$paymentSourceId';
+  static String cardSuggest(String category) => '/api/card-offers/suggest?category=$category';
 }

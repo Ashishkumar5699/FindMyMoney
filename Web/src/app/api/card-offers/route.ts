@@ -6,9 +6,7 @@ export async function GET(req: NextRequest) {
   try { await verifyToken(req); } catch {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
-  const { searchParams } = new URL(req.url);
-  const qs = searchParams.toString() ? `?${searchParams.toString()}` : '';
-  const upstream = await dotnetFetch(`/api/findmymoney/incomes${qs}`, { method: 'GET' }, extractBearer(req));
+  const upstream = await dotnetFetch(`/api/findmymoney/cardoffers`, { method: 'GET' }, extractBearer(req));
   return NextResponse.json(await upstream.json(), { status: upstream.status });
 }
 
@@ -17,6 +15,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
   const body = await req.text();
-  const upstream = await dotnetFetch(`/api/findmymoney/incomes`, { method: 'POST', body }, extractBearer(req));
-  return NextResponse.json(await upstream.json(), { status: upstream.status });
+  const upstream = await dotnetFetch(`/api/findmymoney/cardoffers`, { method: 'POST', body }, extractBearer(req));
+  const text = await upstream.text();
+  if (!text) return new NextResponse(null, { status: upstream.status });
+  try {
+    return NextResponse.json(JSON.parse(text), { status: upstream.status });
+  } catch {
+    return new NextResponse(text, { status: upstream.status });
+  }
 }
