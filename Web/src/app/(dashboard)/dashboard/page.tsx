@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
+import { emisDue, isCardBillPayment } from '@/lib/finance';
 
 interface Expense  { id: string; amount: number; category: string; description: string; date: string; }
 interface Income   { id: string; amount: number; source: string; description: string; date: string; }
@@ -86,11 +87,13 @@ export default function DashboardPage() {
   }, []);
 
   const totalIncome  = incomes.reduce((s, i) => s + i.amount, 0);
-  const totalExpense = expenses.reduce((s, e) => s + e.amount, 0);
+  const spending     = expenses.filter(e => !isCardBillPayment(e));
+  const totalExpense = spending.reduce((s, e) => s + e.amount, 0);
   const totalEmi     = emis.reduce((s, e) => s + e.emiAmount, 0);
+  const emiDue       = emisDue(emis, now.getFullYear(), now.getMonth() + 1);
   const activeInv    = investments.filter(i => i.status === 'Active');
   const totalInvested = activeInv.reduce((s, i) => s + i.principalAmount, 0);
-  const balance      = totalIncome - totalExpense - totalEmi;
+  const balance      = totalIncome - totalExpense - emiDue;
 
   const recent = [
     ...expenses.map(e => ({ type: 'exp' as const, label: e.category, sub: e.description, amount: -e.amount, date: e.date })),
@@ -116,7 +119,7 @@ export default function DashboardPage() {
       <div className="stat-cards" style={{ marginBottom: 24 }}>
         <SummaryCard label="Income"     value={fmt(totalIncome)}  color="#10b981" sub="this month" />
         <SummaryCard label="Expenses"   value={fmt(totalExpense)} color="#ef4444" sub="this month" />
-        <SummaryCard label="EMIs"       value={fmt(totalEmi)}     color="#f59e0b" sub={`${emis.length} active`} />
+        <SummaryCard label="EMIs due"   value={fmt(emiDue)}       color="#f59e0b" sub={`of ${fmt(totalEmi)}/mo · ${emis.length} active`} />
         <SummaryCard label="Invested"   value={fmt(totalInvested)}color="#8b5cf6" sub={`${activeInv.length} active`} />
         <SummaryCard
           label="Net Balance"
@@ -136,7 +139,7 @@ export default function DashboardPage() {
         {/* Spend by category */}
         <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 6px rgba(0,0,0,0.05)', padding: '20px 24px' }}>
           <h2 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 600 }}>Spend by Category</h2>
-          <CategoryChart expenses={expenses} />
+          <CategoryChart expenses={spending} />
         </div>
 
         {/* Recent transactions */}

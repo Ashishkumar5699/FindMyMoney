@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken, extractBearer } from '@/lib/auth';
 import { dotnetFetch } from '@/lib/dotnet';
+import { isCardBillPayment } from '@/lib/finance';
 
 // ── Tool definitions ──────────────────────────────────────────────────────────
 
@@ -93,7 +94,6 @@ function unwrapList(raw: unknown): unknown[] {
 async function callTool(
   name: string,
   args: Record<string, string | number>,
-  userId: string,
   token: string,
 ): Promise<string> {
   const qs = (params: Record<string, string | number | undefined>) => {
@@ -108,7 +108,7 @@ async function callTool(
     case 'get_expenses': {
       // Fetch by year/month; filter category client-side (DB stores "BKC / Beer", not "BKC")
       const expRes = await dotnetFetch(
-        `/api/findmymoney/expenses/${userId}${qs({ year: args.year, month: args.month })}`,
+        `/api/findmymoney/expenses${qs({ year: args.year, month: args.month })}`,
         {},
         token,
       );
@@ -122,7 +122,7 @@ async function callTool(
       return JSON.stringify(expenses);
     }
     case 'get_income':
-      path = `/api/findmymoney/incomes/${userId}${qs({ year: args.year, month: args.month })}`;
+      path = `/api/findmymoney/incomes${qs({ year: args.year, month: args.month })}`;
       break;
     case 'get_monthly_summary': {
       // Accepts year+month integers (consistent with get_expenses schema)
@@ -137,10 +137,11 @@ async function callTool(
         month = parseInt(monStr, 10);
       }
       const [expRes, incRes] = await Promise.all([
-        dotnetFetch(`/api/findmymoney/expenses/${userId}?year=${year}&month=${month}`, {}, token),
-        dotnetFetch(`/api/findmymoney/incomes/${userId}?year=${year}&month=${month}`, {}, token),
+        dotnetFetch(`/api/findmymoney/expenses?year=${year}&month=${month}`, {}, token),
+        dotnetFetch(`/api/findmymoney/incomes?year=${year}&month=${month}`, {}, token),
       ]);
-      const expenses = unwrapList(await expRes.json()) as { category?: string; amount?: number }[];
+      const expenses = (unwrapList(await expRes.json()) as { category?: string; amount?: number }[])
+        .filter((e) => !isCardBillPayment({ category: e.category ?? '' }));
       const incomes = unwrapList(await incRes.json()) as { amount?: number }[];
       const totalExpenses = expenses.reduce((s, e) => s + (e.amount ?? 0), 0);
       const totalIncome = incomes.reduce((s, i) => s + (i.amount ?? 0), 0);
@@ -161,16 +162,16 @@ async function callTool(
       });
     }
     case 'get_loans_and_emis':
-      path = `/api/findmymoney/loans/${userId}`;
+      path = `/api/findmymoney/loans`;
       break;
     case 'get_credit_cards':
-      path = `/api/findmymoney/cc-bills/${userId}`;
+      path = `/api/findmymoney/creditcardbills`;
       break;
     case 'get_investments':
-      path = `/api/findmymoney/investments/${userId}`;
+      path = `/api/findmymoney/investments`;
       break;
     case 'get_transfers':
-      path = `/api/findmymoney/transfers/${userId}${qs({ year: args.year, month: args.month })}`;
+      path = `/api/findmymoney/transfers${qs({ year: args.year, month: args.month })}`;
       break;
     default:
       throw new Error(`Unknown tool: ${name}`);
@@ -194,14 +195,12 @@ function err(id: unknown, code: number, message: string) {
 
 export async function POST(req: NextRequest) {
   // Authenticate — JWT must be valid FindMyMoney token
-  let claims;
   try {
-    claims = await verifyToken(req);
+    await verifyToken(req);
   } catch {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const token = extractBearer(req);
-  const userId = claims.nameid;
 
   let body: { jsonrpc?: string; id?: unknown; method?: string; params?: unknown };
   try {
@@ -229,7 +228,7 @@ export async function POST(req: NextRequest) {
     case 'tools/call': {
       const { name, arguments: args } = params as { name: string; arguments: Record<string, string | number> };
       try {
-        const text = await callTool(name, args ?? {}, userId, token);
+        const text = await callTool(name, args ?? {}, token);
         return ok(id, { content: [{ type: 'text', text }] });
       } catch (e) {
         return err(id, -32603, (e as Error).message);
