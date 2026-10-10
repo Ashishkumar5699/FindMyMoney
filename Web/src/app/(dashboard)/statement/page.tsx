@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
+import { emisDue, isCardBillPayment } from '@/lib/finance';
 
 interface Expense { id: string; amount: number; category: string; subCategory: string; description: string; date: string; isVirtual: boolean; }
 interface Income { id: string; amount: number; source: string; description: string; date: string; }
@@ -86,7 +87,7 @@ export default function StatementPage() {
     setLoading(true);
     try {
       // Cash flow: only real money movement (IsVirtual=false)
-      // Accrual:   all expenses (including CC virtual charges)
+      // Accrual:   spending incl. CC virtual charges, minus the card bill payments that settle them
       const expenseQs = mode === 'cashflow'
         ? `?year=${year}&month=${month}&isVirtual=false`
         : `?year=${year}&month=${month}`;
@@ -97,7 +98,7 @@ export default function StatementPage() {
         api.get<Emi[]>('/api/emis?status=Active'),
         api.get<Investment[]>('/api/investments'),
       ]);
-      setExpenses(e ?? []);
+      setExpenses((e ?? []).filter(x => mode === 'cashflow' || !isCardBillPayment(x)));
       setIncomes(i ?? []);
       setEmis(em ?? []);
       setInvestments(inv ?? []);
@@ -134,9 +135,9 @@ export default function StatementPage() {
 
   const totalIncome    = incomes.reduce((s, i) => s + i.amount, 0);
   const totalExpense   = expenses.reduce((s, e) => s + e.amount, 0);
-  const totalEmi       = emis.reduce((s, e) => s + e.emiAmount, 0);
+  const emiDue         = emisDue(emis, year, month);
   const totalInvActive = investments.filter(i => i.status === 'Active').reduce((s, i) => s + i.principalAmount, 0);
-  const net            = totalIncome - totalExpense - totalEmi;
+  const net            = totalIncome - totalExpense - emiDue;
   const fmt = (n: number) => `₹${n.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
 
   const typeBadge = (r: Row) => {
@@ -183,7 +184,7 @@ export default function StatementPage() {
           ))}
         </select>
         {viewMode === 'accrual' && (
-          <span style={{ fontSize: 11, color: '#94a3b8', marginLeft: 4 }}>CC charges shown when swiped</span>
+          <span style={{ fontSize: 11, color: '#94a3b8', marginLeft: 4 }}>CC charges shown when swiped · bill payments under Cash Flow</span>
         )}
         {viewMode === 'cashflow' && (
           <span style={{ fontSize: 11, color: '#94a3b8', marginLeft: 4 }}>Only actual cash movements</span>
@@ -195,7 +196,7 @@ export default function StatementPage() {
           <div className="stat-cards" style={{ marginBottom: 28 }}>
             <Card label="Income"               value={fmt(totalIncome)}    color="#10b981" />
             <Card label="Expenses"             value={fmt(totalExpense)}   color="#ef4444" />
-            <Card label="EMIs (active)"        value={fmt(totalEmi)}       color="#f59e0b" />
+            <Card label="EMIs due"             value={fmt(emiDue)}         color="#f59e0b" />
             <Card label="Investments (active)" value={fmt(totalInvActive)} color="#8b5cf6" />
             <Card label="Net"                  value={fmt(net)}            color={net >= 0 ? '#3b82f6' : '#ef4444'} />
           </div>
