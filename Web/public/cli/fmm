@@ -13,6 +13,9 @@ Talks to the FindMyMoney API with your own login, so the app's rules apply
   fmm bills [card]                  list card bills
   fmm bill-paid sbi 2026-10 --from hdfc
   fmm statement sbi                 estimate the next statement
+  fmm update                        get the latest version
+
+Install: curl -fsSL https://findmymoney.pnjb.in/cli/install.sh | sh
 
 Run `fmm <command> -h` for options.
 """
@@ -23,12 +26,15 @@ import csv
 import getpass
 import json
 import os
+import re
 import sys
 import urllib.error
 import urllib.request
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 
+VERSION = "1.1.0"
+UPDATE_URL = "https://findmymoney.pnjb.in/cli/fmm"
 DEFAULT_API = "https://pnjbdetnetdevwin-bwfweggteaefh7au.centralindia-01.azurewebsites.net"
 CONFIG = os.path.expanduser("~/.config/fmm/config.json")
 CARD_BILL = "Credit Card Bill"
@@ -326,8 +332,35 @@ def cmd_statement(a):
         print(f"  Credit limit             {money(card['creditLimit']):>14}")
 
 
+def cmd_update(a):
+    try:
+        with urllib.request.urlopen(UPDATE_URL, timeout=30) as resp:
+            new = resp.read()
+    except urllib.error.URLError as e:
+        die(f"cannot download {UPDATE_URL}: {e}")
+    m = re.search(rb'^VERSION = "([0-9.]+)"', new, re.M)
+    if not (new.startswith(b"#!/usr/bin/env python3") and m):
+        die("download doesn't look like fmm — not updating")
+    latest = m.group(1).decode()
+    as_tuple = lambda v: tuple(int(x) for x in v.split("."))
+    if as_tuple(latest) <= as_tuple(VERSION) and not a.force:
+        print(f"fmm {VERSION} is the latest")
+        return
+    target = os.path.realpath(__file__)
+    tmp = target + ".new"
+    try:
+        with open(tmp, "wb") as f:
+            f.write(new)
+        os.chmod(tmp, 0o755)
+        os.replace(tmp, target)
+    except PermissionError:
+        die(f"no permission to write {target} — try: sudo fmm update")
+    print(f"Updated fmm {VERSION} → {latest}")
+
+
 def main():
     p = argparse.ArgumentParser(prog="fmm", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument("--version", action="version", version=f"fmm {VERSION}")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     s = sub.add_parser("login", help="sign in")
@@ -381,6 +414,10 @@ def main():
     s.add_argument("card")
     s.add_argument("--paid", help="extra payments not recorded in the app yet")
     s.set_defaults(fn=cmd_statement)
+
+    s = sub.add_parser("update", help="download the latest fmm")
+    s.add_argument("--force", action="store_true", help="reinstall even if already on the latest version")
+    s.set_defaults(fn=cmd_update)
 
     a = p.parse_args()
     a.fn(a)
