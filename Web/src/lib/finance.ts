@@ -8,3 +8,12 @@ export function emisDue(emis: { emiAmount: number; nextDueDate: string }[], year
     .filter(e => new Date(e.nextDueDate) < nextMonthStart)
     .reduce((s, e) => s + e.emiAmount, 0);
 }
+
+// A budget category covers itself and, for a parent like "Shopping", its sub-categories ("Shopping / Online").
+export function budgetCovers(budgetCategories: string[], expenseCategory: string): boolean {
+  const cat = expenseCategory.trim().toLowerCase();
+  return budgetCategories.some(b => {
+    const key = b.trim().toLowerCase();
+    return cat === key || cat.startsWith(`${key} / `);
+  });
+}
