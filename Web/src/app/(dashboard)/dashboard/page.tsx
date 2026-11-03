@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { emisDue, isCardBillPayment } from '@/lib/finance';
+import SpendingInsights from './SpendingInsights';
 
 interface Expense  { id: string; amount: number; category: string; description: string; date: string; }
 interface Income   { id: string; amount: number; source: string; description: string; date: string; }
@@ -134,6 +135,8 @@ export default function DashboardPage() {
         <h2 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 600 }}>Income vs Expenses</h2>
         <IncomeVsExpenseBar income={totalIncome} expense={totalExpense} />
       </div>
+
+      <SpendingInsights />
 
       <div className="two-col" style={{ marginBottom: 24 }}>
         {/* Spend by category */}
