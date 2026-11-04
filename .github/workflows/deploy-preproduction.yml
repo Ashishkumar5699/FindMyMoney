@@ -44,10 +44,14 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_WEB_TOKEN }}
           AI_CORE_URL: ${{ secrets.PNJB_AI_CORE_URL }}
           AI_PLATFORM_KEY: ${{ secrets.PNJB_AI_PLATFORM_KEY }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         run: |
           npx vercel@latest \
             --env PNJB_AI_CORE_URL="$AI_CORE_URL" \
             --env PNJB_AI_PLATFORM_KEY="$AI_PLATFORM_KEY" \
+            --env GOOGLE_CLIENT_ID="$GOOGLE_CLIENT_ID" \
+            --env GOOGLE_CLIENT_SECRET="$GOOGLE_CLIENT_SECRET" \
             --token "$VERCEL_TOKEN" \
             --yes
 
