@@ -10,6 +10,7 @@ jobs:
   detect:
     name: Detect changes
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       nextjs: ${{ steps.filter.outputs.nextjs }}
       flutter: ${{ steps.filter.outputs.flutter }}
@@ -33,6 +34,7 @@ jobs:
     needs: detect
     if: needs.detect.outputs.nextjs == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       VERCEL_ORG_ID: team_UtKuX5197XYDwbUS3o7wmqXO
       VERCEL_PROJECT_ID: prj_gqvQyMAT2JYTA6IH2EKucVWIj18S
@@ -44,10 +46,14 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_WEB_TOKEN }}
           AI_CORE_URL: ${{ secrets.PNJB_AI_CORE_URL }}
           AI_PLATFORM_KEY: ${{ secrets.PNJB_AI_PLATFORM_KEY }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         run: |
-          npx vercel@latest --prod \
+          npx vercel@65.4.0 --prod \
             --env PNJB_AI_CORE_URL="$AI_CORE_URL" \
             --env PNJB_AI_PLATFORM_KEY="$AI_PLATFORM_KEY" \
+            --env GOOGLE_CLIENT_ID="$GOOGLE_CLIENT_ID" \
+            --env GOOGLE_CLIENT_SECRET="$GOOGLE_CLIENT_SECRET" \
             --token "$VERCEL_TOKEN" \
             --yes
 
@@ -57,6 +63,7 @@ jobs:
     needs: detect
     if: needs.detect.outputs.flutter == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     env:
       VERCEL_ORG_ID: team_UtKuX5197XYDwbUS3o7wmqXO
       VERCEL_PROJECT_ID: prj_pZDOohEXxapqYp79fZhbNuBR86M1
@@ -81,5 +88,5 @@ jobs:
         run: cp Flutter/vercel.json Flutter/build/web/vercel.json
 
       - name: Deploy to Vercel (production)
-        run: npx vercel --prod --token ${{ secrets.VERCEL_TOKEN }} --yes
+        run: npx vercel@65.4.0 --prod --token ${{ secrets.VERCEL_TOKEN }} --yes
         working-directory: Flutter/build/web
