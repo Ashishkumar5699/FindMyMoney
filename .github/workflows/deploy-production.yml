@@ -10,6 +10,7 @@ jobs:
   detect:
     name: Detect changes
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       nextjs: ${{ steps.filter.outputs.nextjs }}
       flutter: ${{ steps.filter.outputs.flutter }}
@@ -33,6 +34,7 @@ jobs:
     needs: detect
     if: needs.detect.outputs.nextjs == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       VERCEL_ORG_ID: team_UtKuX5197XYDwbUS3o7wmqXO
       VERCEL_PROJECT_ID: prj_gqvQyMAT2JYTA6IH2EKucVWIj18S
@@ -61,6 +63,7 @@ jobs:
     needs: detect
     if: needs.detect.outputs.flutter == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     env:
       VERCEL_ORG_ID: team_UtKuX5197XYDwbUS3o7wmqXO
       VERCEL_PROJECT_ID: prj_pZDOohEXxapqYp79fZhbNuBR86M1
