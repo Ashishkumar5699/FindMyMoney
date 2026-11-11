@@ -49,7 +49,7 @@ jobs:
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         run: |
-          npx vercel@latest --prod \
+          npx vercel@65.4.0 --prod \
             --env PNJB_AI_CORE_URL="$AI_CORE_URL" \
             --env PNJB_AI_PLATFORM_KEY="$AI_PLATFORM_KEY" \
             --env GOOGLE_CLIENT_ID="$GOOGLE_CLIENT_ID" \
@@ -88,5 +88,5 @@ jobs:
         run: cp Flutter/vercel.json Flutter/build/web/vercel.json
 
       - name: Deploy to Vercel (production)
-        run: npx vercel --prod --token ${{ secrets.VERCEL_TOKEN }} --yes
+        run: npx vercel@65.4.0 --prod --token ${{ secrets.VERCEL_TOKEN }} --yes
         working-directory: Flutter/build/web
