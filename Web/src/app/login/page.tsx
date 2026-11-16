@@ -19,6 +19,8 @@ export default function LoginPage() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('error') === 'google_failed') {
       setError('Google sign-in failed. Please try again.');
+    } else if (params.get('error') === 'google_account_exists') {
+      setError('An account with this email already exists. Sign in with your password, then link Google from Settings.');
     }
   }, []);
 

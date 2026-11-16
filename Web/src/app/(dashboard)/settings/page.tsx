@@ -2,6 +2,7 @@
 
 import { useEffect, useState, FormEvent } from 'react';
 import { api } from '@/lib/api';
+import AccountCard from './AccountCard';
 
 /* ── Types ─────────────────────────────────────────────────────────── */
 interface Category {
@@ -51,6 +52,8 @@ export default function SettingsPage() {
   return (
     <div>
       <h1 style={{ margin: '0 0 20px', fontSize: 24, fontWeight: 700 }}>Settings</h1>
+
+      <AccountCard />
 
       {/* Tab bar */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 28, borderBottom: '2px solid #f1f5f9', paddingBottom: 0 }}>
