@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Box, Button, Card, CardContent, Collapse, Grid, LinearProgress, List, ListItemButton, Paper, Skeleton, Stack,
+  Alert, Box, Button, Card, CardContent, Collapse, Grid, LinearProgress, List, ListItemButton, Paper, Skeleton, Stack,
   Table, TableBody, TableCell, TableHead, TableRow, ToggleButton, ToggleButtonGroup, Typography,
 } from '@mui/material';
 import { BarChart } from '@mui/x-charts/BarChart';
@@ -20,6 +20,8 @@ const compact = (n: number) =>
   n >= 100000 ? `₹${(n / 100000).toFixed(1)}L` : n >= 1000 ? `₹${Math.round(n / 1000)}k` : `₹${Math.round(n)}`;
 const parentOf = (c: string) => c.split(' / ')[0].trim() || 'Other';
 const subOf = (c: string) => c.split(' / ')[1]?.trim() || 'General';
+// "Swiggy", "SWIGGY " and "swiggy" are one merchant
+const merchantKey = (d: string) => d.trim().replace(/\s+/g, ' ').toLowerCase();
 
 // Last `count` complete months, oldest first — the current month is still filling up.
 function lastMonths(count: number): Month[] {
@@ -32,27 +34,47 @@ function lastMonths(count: number): Month[] {
 
 export default function SpendingInsights() {
   const [range, setRange] = useState(3);
+  // Months already loaded, kept across range changes so 3 → 12 → 3 doesn't fetch the same months again
   const [byMonth, setByMonth] = useState<Record<string, Expense[]>>({});
+  const loaded = useRef<Record<string, Expense[]>>({});
+  const [failed, setFailed] = useState<string[]>([]);
+  const [attempt, setAttempt] = useState(0);
   const [loading, setLoading] = useState(true);
   const [focus, setFocus] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
 
   const months = useMemo(() => lastMonths(range), [range]);
 
+  useEffect(() => { setFocus(null); }, [range]);
+
   useEffect(() => {
     let alive = true;
+    const missing = months.filter(m => !(m.key in loaded.current));
+    if (missing.length === 0) { setFailed([]); setLoading(false); return; }
     setLoading(true);
-    setFocus(null);
-    Promise.all(months.map(m =>
+    Promise.all(missing.map(m =>
       api.get<Expense[]>(`/api/expenses?year=${m.year}&month=${m.month}`)
-        .then(rows => [m.key, (rows ?? []).filter(e => !isCardBillPayment(e))] as const)
-        .catch(() => [m.key, [] as Expense[]] as const),
-    )).then(entries => { if (alive) { setByMonth(Object.fromEntries(entries)); setLoading(false); } });
+        .then(rows => ({ key: m.key, rows: (rows ?? []).filter(e => !isCardBillPayment(e)) }))
+        .catch(() => ({ key: m.key, rows: null })),
+    )).then(results => {
+      if (!alive) return;
+      for (const r of results) if (r.rows) loaded.current[r.key] = r.rows;
+      setByMonth({ ...loaded.current });
+      // A month that didn't load is left out and named, never counted as ₹0
+      setFailed(results.filter(r => !r.rows).map(r => r.key));
+      setLoading(false);
+    });
     return () => { alive = false; };
-  }, [months]);
+  }, [months, attempt]);
 
-  const totals = months.map(m => ({ ...m, total: (byMonth[m.key] ?? []).reduce((s, e) => s + e.amount, 0) }));
-  const grandTotal = totals.reduce((s, m) => s + m.total, 0);
+  const totals = months.map(m => {
+    const rows = byMonth[m.key];
+    return { ...m, ok: rows !== undefined, total: (rows ?? []).reduce((s, e) => s + e.amount, 0) };
+  });
+  const okMonths = totals.filter(t => t.ok);
+  const grandTotal = okMonths.reduce((s, m) => s + m.total, 0);
+  const average = okMonths.length ? grandTotal / okMonths.length : 0;
+  const failedLabels = totals.filter(t => failed.includes(t.key)).map(t => t.label);
   const scope = useMemo(
     () => (focus ? byMonth[focus] ?? [] : months.flatMap(m => byMonth[m.key] ?? [])),
     [focus, byMonth, months],
@@ -74,19 +96,22 @@ export default function SpendingInsights() {
   }, [scope]);
 
   const merchants = useMemo(() => {
-    const map = new Map<string, { total: number; count: number }>();
+    const map = new Map<string, { name: string; total: number; count: number }>();
     for (const e of scope) {
-      if (['EMI', 'SIP'].includes(parentOf(e.category)) || !e.description) continue;
-      const m = map.get(e.description) ?? { total: 0, count: 0 };
+      if (['EMI', 'SIP'].includes(parentOf(e.category)) || !e.description?.trim()) continue;
+      const key = merchantKey(e.description);
+      const m = map.get(key) ?? { name: e.description.trim(), total: 0, count: 0 };
       m.total += e.amount; m.count += 1;
-      map.set(e.description, m);
+      map.set(key, m);
     }
-    return [...map.entries()].sort((a, b) => b[1].total - a[1].total).slice(0, 8);
+    return [...map.values()].sort((a, b) => b.total - a.total).slice(0, 8);
   }, [scope]);
 
   const emi = categories.find(c => c.name === 'EMI')?.total ?? 0;
   const top = categories[0];
-  const focusLabel = focus ? totals.find(m => m.key === focus)?.label : null;
+  const focused = focus ? totals.find(m => m.key === focus) : undefined;
+  const focusLabel = focused?.label ?? null;
+  const vsAverage = focused && average ? Math.round((100 * (focused.total - average)) / average) : null;
   const last = months[months.length - 1];
   const pct = (v: number, of: number) => `${Math.round((100 * v) / (of || 1))}%`;
 
@@ -104,6 +129,16 @@ export default function SpendingInsights() {
         </ToggleButtonGroup>
       </Stack>
 
+      {!loading && failedLabels.length > 0 && (
+        <Alert
+          severity="warning"
+          sx={{ mb: 2 }}
+          action={<Button color="inherit" size="small" onClick={() => setAttempt(a => a + 1)}>Retry</Button>}
+        >
+          Couldn’t load {failedLabels.join(', ')}. The totals below leave {failedLabels.length === 1 ? 'it' : 'them'} out.
+        </Alert>
+      )}
+
       {loading ? (
         <Stack spacing={2}>
           <Skeleton variant="rounded" height={90} />
@@ -112,9 +147,15 @@ export default function SpendingInsights() {
       ) : (
         <>
           <Grid container spacing={2} sx={{ mb: 2 }}>
-            <Stat label="Total spent" value={fmt(grandTotal)} sub={`${range} months`} />
-            <Stat label="Monthly average" value={fmt(grandTotal / range)} sub="per month" />
-            <Stat label="Top category" value={top?.name ?? '—'} sub={top ? `${fmt(top.total)} · ${pct(top.total, scopeTotal)}` : ''} />
+            <Stat label="Total spent" value={fmt(focused ? focused.total : grandTotal)} sub={focusLabel ? `in ${focusLabel}` : `${okMonths.length} months`} />
+            <Stat
+              label="Monthly average"
+              value={fmt(average)}
+              sub={vsAverage === null
+                ? `over ${okMonths.length} months`
+                : `${focusLabel} is ${Math.abs(vsAverage)}% ${vsAverage >= 0 ? 'above' : 'below'} it`}
+            />
+            <Stat label="Top category" value={top?.name ?? '—'} sub={top ? `${fmt(top.total)} · ${pct(top.total, scopeTotal)}${focusLabel ? ` in ${focusLabel}` : ''}` : ''} />
             <Stat label="EMIs" value={fmt(emi)} sub={`${pct(emi, scopeTotal)} of spending${focusLabel ? ` in ${focusLabel}` : ''}`} />
           </Grid>
 
@@ -130,7 +171,8 @@ export default function SpendingInsights() {
               xAxis={[{ scaleType: 'band', data: totals.map(t => t.label), categoryGapRatio: range === 3 ? 0.55 : 0.35 }]}
               yAxis={[{ valueFormatter: (v: number) => compact(v), width: 56 }]}
               series={[{
-                data: totals.map(t => t.total), label: 'Spent', color: BAR, valueFormatter: v => fmt(v ?? 0),
+                data: totals.map(t => (t.ok ? t.total : null)), label: 'Spent', color: BAR,
+                valueFormatter: v => (v === null ? 'Not loaded' : fmt(v)),
                 barLabel: range <= 6 ? item => compact(item.value ?? 0) : undefined, barLabelPlacement: 'outside',
               }]}
               borderRadius={4}
@@ -182,9 +224,9 @@ export default function SpendingInsights() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {merchants.map(([name, m]) => (
-                      <TableRow key={name} hover>
-                        <TableCell sx={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</TableCell>
+                    {merchants.map(m => (
+                      <TableRow key={m.name} hover>
+                        <TableCell sx={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</TableCell>
                         <TableCell align="right" sx={{ color: 'text.secondary' }}>{m.count}</TableCell>
                         <TableCell align="right" sx={{ fontWeight: 600 }}>{fmt(m.total)}</TableCell>
                       </TableRow>
