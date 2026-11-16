@@ -19,6 +19,10 @@ export async function GET(req: NextRequest) {
       body: JSON.stringify({ idToken }),
     });
 
+    if (res.status === 409) {
+      // A password account already uses this email: Google is linked from Settings after a password sign-in
+      return NextResponse.redirect(new URL('/login?error=google_account_exists', APP_URL));
+    }
     if (!res.ok) {
       return NextResponse.redirect(new URL('/login?error=google_failed', APP_URL));
     }
