@@ -5,6 +5,7 @@ import { api } from '@/lib/api';
 import { emisDue, isCardBillPayment } from '@/lib/finance';
 import SpendingInsights from './SpendingInsights';
 import BudgetsCard from './BudgetsCard';
+import SuggestionsCard from './SuggestionsCard';
 
 interface Expense  { id: string; amount: number; category: string; description: string; date: string; }
 interface Income   { id: string; amount: number; source: string; description: string; date: string; }
@@ -138,6 +139,8 @@ export default function DashboardPage() {
       </div>
 
       <BudgetsCard />
+
+      <SuggestionsCard />
 
       <SpendingInsights />
 
