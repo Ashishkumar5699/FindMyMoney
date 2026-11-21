@@ -48,14 +48,26 @@ jobs:
           AI_PLATFORM_KEY: ${{ secrets.PNJB_AI_PLATFORM_KEY }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          DOTNET_JWT_SECRET: ${{ secrets.DOTNET_JWT_SECRET }}
+          DOTNET_JWT_SECRET_PREVIOUS: ${{ secrets.DOTNET_JWT_SECRET_PREVIOUS }}
         run: |
-          npx vercel@65.4.0 \
-            --env PNJB_AI_CORE_URL="$AI_CORE_URL" \
-            --env PNJB_AI_PLATFORM_KEY="$AI_PLATFORM_KEY" \
-            --env GOOGLE_CLIENT_ID="$GOOGLE_CLIENT_ID" \
-            --env GOOGLE_CLIENT_SECRET="$GOOGLE_CLIENT_SECRET" \
-            --token "$VERCEL_TOKEN" \
-            --yes
+          args=(
+            --env PNJB_AI_CORE_URL="$AI_CORE_URL"
+            --env PNJB_AI_PLATFORM_KEY="$AI_PLATFORM_KEY"
+            --env GOOGLE_CLIENT_ID="$GOOGLE_CLIENT_ID"
+            --env GOOGLE_CLIENT_SECRET="$GOOGLE_CLIENT_SECRET"
+          )
+          # The .NET token key (the app won't start without it). Only passed when the secret is set, so an unset
+          # secret leaves any value already on Vercel alone instead of blanking it.
+          if [ -n "$DOTNET_JWT_SECRET" ]; then
+            args+=(--env DOTNET_JWT_SECRET="$DOTNET_JWT_SECRET")
+          else
+            echo "::warning::DOTNET_JWT_SECRET secret is not set: the deployment relies on a value already on Vercel."
+          fi
+          if [ -n "$DOTNET_JWT_SECRET_PREVIOUS" ]; then
+            args+=(--env DOTNET_JWT_SECRET_PREVIOUS="$DOTNET_JWT_SECRET_PREVIOUS")
+          fi
+          npx vercel@65.4.0 "${args[@]}" --token "$VERCEL_TOKEN" --yes
 
   # ── Flutter preview deploy ───────────────────────────────────────────────────
   deploy-flutter:
