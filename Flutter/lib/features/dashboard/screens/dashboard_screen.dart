@@ -12,6 +12,7 @@ import '../../expenses/providers/expense_provider.dart';
 import '../../incomes/providers/income_provider.dart';
 import '../../emis/providers/emi_provider.dart';
 import '../../sms_review/providers/sms_review_provider.dart';
+import '../widgets/suggestions_card.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -185,6 +186,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ),
                 ),
               ),
+
+            const SizedBox(height: 16),
+
+            // AI spending suggestions (loads on its own; "not ready" is a normal state)
+            const SuggestionsCard(),
 
             const SizedBox(height: 16),
 

@@ -5,6 +5,9 @@ class ApiConstants {
   static const String login = '/api/auth/login';
   static const String register = '/api/auth/register';
 
+  // AI spending suggestions (aggregates only, cached per day; 'not_ready' when no model is up)
+  static const String suggestions = '/api/insights/suggestions';
+
   static const String expenses = '/api/expenses';
   static String expense(String id) => '/api/expenses/$id';
 
